@@ -1,28 +1,66 @@
-import { Audio } from "expo-av";
+import {
+  AudioModule,
+  AudioRecorder,
+  RecordingPresets,
+  setAudioModeAsync,
+} from "expo-audio";
 import * as FileSystem from "expo-file-system";
 import { getDb } from "./db";
 
-export async function startRecording(): Promise<Audio.Recording> {
-  await Audio.requestPermissionsAsync();
-  await Audio.setAudioModeAsync({
-    allowsRecordingIOS: true,
-    playsInSilentModeIOS: true,
-  });
-  const recording = new Audio.Recording();
-  await recording.prepareToRecordAsync(
-    Audio.RecordingOptionsPresets.HIGH_QUALITY
-  );
-  await recording.startAsync();
-  return recording;
+// Create a recording instance that can be used by components
+export function createAudioRecorder() {
+  let recording: AudioRecorder | null = null;
+
+  const startRecording = async () => {
+    try {
+      await AudioModule.requestRecordingPermissionsAsync();
+      await setAudioModeAsync({
+        allowsRecording: true,
+        playsInSilentMode: true,
+      });
+
+      recording = new AudioRecorder(RecordingPresets.HIGH_QUALITY);
+      await recording.prepareToRecordAsync();
+      recording.record();
+      return recording;
+    } catch (error) {
+      console.error("Failed to start recording:", error);
+      throw error;
+    }
+  };
+
+  const stopRecording = async () => {
+    if (recording) {
+      await recording.stop();
+      const uri = recording.uri;
+      recording = null;
+      return uri;
+    }
+    return null;
+  };
+
+  return {
+    startRecording,
+    stopRecording,
+    isRecording: () => recording !== null,
+  };
+}
+
+export async function startRecording(): Promise<AudioRecorder> {
+  const recorder = createAudioRecorder();
+  return await recorder.startRecording();
 }
 
 export async function stopAndSaveRecording(
   eventId: string,
-  recording: Audio.Recording
+  recording: AudioRecorder
 ) {
-  await recording.stopAndUnloadAsync();
-  const uri = recording.getURI();
+  if (!recording) return;
+
+  await recording.stop();
+  const uri = recording.uri;
   if (!uri) return;
+
   const filename = `${Date.now()}-${eventId}.m4a`;
   const dest = FileSystem.documentDirectory + filename;
   await FileSystem.copyAsync({ from: uri, to: dest });
@@ -32,7 +70,7 @@ export async function stopAndSaveRecording(
     `INSERT INTO audio_notes (event_id, file_uri, duration_ms, created_at) VALUES (?, ?, ?, ?)`,
     eventId,
     dest,
-    (await recording.getStatusAsync()).durationMillis ?? null,
+    recording.currentTime ? Math.round(recording.currentTime * 1000) : null,
     Date.now()
   );
 
