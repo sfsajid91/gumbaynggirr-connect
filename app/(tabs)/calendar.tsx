@@ -19,14 +19,15 @@ const days = [
 ];
 
 export default function CalendarScreen() {
-  const today = new Date();
   const [monthOffset, setMonthOffset] = useState(0);
+  const { events, loading } = useEvents();
 
   const current = useMemo(() => {
+    const today = new Date();
     const d = new Date(today);
     d.setMonth(d.getMonth() + monthOffset);
     return d;
-  }, [today, monthOffset]);
+  }, [monthOffset]);
 
   const month = current.toLocaleString(undefined, { month: "long" });
   const year = current.getFullYear();
@@ -37,8 +38,6 @@ export default function CalendarScreen() {
   const cells = Array(firstDay)
     .fill(null)
     .concat(Array.from({ length: daysInMonth }, (_, i) => i + 1));
-
-  const { events, loading } = useEvents();
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.warmWhite, padding: 16 }}>
@@ -123,7 +122,7 @@ export default function CalendarScreen() {
         <Text
           style={{ fontWeight: "700", color: Colors.textDark, marginBottom: 8 }}
         >
-          Today's Events
+          Today&apos;s Events
         </Text>
         {loading ? (
           <Skeleton height={64} />
