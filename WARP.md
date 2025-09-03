@@ -11,21 +11,21 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 ### Essential Commands
 
 ```bash
-# Install dependencies (uses pnpm as package manager)
-pnpm install
+# Install dependencies (uses npm as package manager)
+npm install
 
 # Start development server
-pnpm start
+npm start
 # or
 npx expo start
 
 # Platform-specific builds
-pnpm run android    # Android emulator
-pnpm run ios        # iOS simulator
-pnpm run web        # Web browser
+npm run android     # Android emulator
+npm run ios         # iOS simulator
+npm run web         # Web browser
 
 # Code quality
-pnpm run lint       # ESLint with Expo config
+npm run lint        # ESLint with Expo config
 ```
 
 ### Build and Deploy
@@ -43,7 +43,7 @@ npx eas build --profile development --platform all
 
 ```bash
 # Reset project structure (removes example code)
-pnpm run reset-project
+npm run reset-project
 
 # Clear Expo cache if needed
 npx expo start --clear
