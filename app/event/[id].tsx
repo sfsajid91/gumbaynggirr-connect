@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Linking,
+  Platform,
   Pressable,
   ScrollView,
   Share,
@@ -73,38 +74,56 @@ export default function EventDetails() {
   }, [id, loadExistingRecording, updateLocationInfo]);
 
   const handleViewMap = async () => {
-    if (!event || !event.lat || !event.lon) {
+    if (!event || event.lat == null || event.lon == null) {
       console.log(
         "Location not available - This event doesn't have location coordinates."
       );
       return;
     }
 
-    const url = `https://www.google.com/maps/search/?api=1&query=${event.lat},${event.lon}`;
-    const supported = await Linking.canOpenURL(url);
+    const lat = event.lat;
+    const lon = event.lon;
+    const label = encodeURIComponent(event.place || event.location || "Venue");
 
-    if (supported) {
-      await Linking.openURL(url);
-    } else {
-      console.log("Error - Unable to open maps application");
+    const androidUrl = `geo:${lat},${lon}?q=${lat},${lon}(${label})`;
+    const iosUrl = `http://maps.apple.com/?ll=${lat},${lon}&q=${label}`;
+    const webUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+
+    try {
+      await Linking.openURL(Platform.OS === "ios" ? iosUrl : androidUrl);
+    } catch {
+      try {
+        await Linking.openURL(webUrl);
+      } catch (e) {
+        console.log("Error - Unable to open maps application", e);
+        ToastAndroid.show("Unable to open maps", ToastAndroid.SHORT);
+      }
     }
   };
 
   const handleGetDirections = async () => {
-    if (!event || !event.lat || !event.lon) {
+    if (!event || event.lat == null || event.lon == null) {
       console.log(
         "Location not available - This event doesn't have location coordinates."
       );
       return;
     }
 
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${event.lat},${event.lon}`;
-    const supported = await Linking.canOpenURL(url);
+    const lat = event.lat;
+    const lon = event.lon;
+    const androidUrl = `google.navigation:q=${lat},${lon}`;
+    const iosUrl = `http://maps.apple.com/?daddr=${lat},${lon}&dirflg=d`;
+    const webUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
 
-    if (supported) {
-      await Linking.openURL(url);
-    } else {
-      console.log("Error - Unable to open maps application");
+    try {
+      await Linking.openURL(Platform.OS === "ios" ? iosUrl : androidUrl);
+    } catch {
+      try {
+        await Linking.openURL(webUrl);
+      } catch (e) {
+        console.log("Error - Unable to open maps application", e);
+        ToastAndroid.show("Unable to open maps", ToastAndroid.SHORT);
+      }
     }
   };
 
