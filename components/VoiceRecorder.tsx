@@ -71,8 +71,6 @@ export default function VoiceRecorder({ eventId }: VoiceRecorderProps) {
     }
 
     try {
-      console.log("Starting recording...");
-
       // Reset states
       setRecordingDuration(0);
 
@@ -90,8 +88,6 @@ export default function VoiceRecorder({ eventId }: VoiceRecorderProps) {
           return newDuration;
         });
       }, 1000);
-
-      console.log("Recording started");
     } catch (error: any) {
       console.error("Failed to start recording:", error);
       Alert.alert(
@@ -103,8 +99,6 @@ export default function VoiceRecorder({ eventId }: VoiceRecorderProps) {
 
   const stopRecording = async () => {
     try {
-      console.log("Stopping recording...");
-
       // Clear recording interval
       if (recordingIntervalRef.current) {
         clearInterval(recordingIntervalRef.current);
@@ -133,7 +127,7 @@ export default function VoiceRecorder({ eventId }: VoiceRecorderProps) {
         );
       }
     } catch (error) {
-      console.error("❌ Failed to stop recording:", error);
+      console.error("Failed to stop recording:", error);
       Alert.alert("Error", "Failed to stop recording.");
     }
   };
@@ -209,17 +203,10 @@ export default function VoiceRecorder({ eventId }: VoiceRecorderProps) {
   const loadExistingRecording = useCallback(async () => {
     try {
       const existing = await getStoredRecordingWithDuration(eventId);
-      console.log("Existing recording:", existing);
+
       if (existing) {
         setRecordingUri(existing.fileUri);
         setStoredDuration(existing.durationMs);
-        console.log(
-          "Loaded existing recording:",
-          existing.fileUri,
-          "Duration:",
-          existing.durationMs,
-          "ms"
-        );
       }
     } catch (error) {
       console.error("Failed to load existing recording:", error);
@@ -229,11 +216,7 @@ export default function VoiceRecorder({ eventId }: VoiceRecorderProps) {
   // Load existing recording and setup audio on mount
   useEffect(() => {
     const initializeComponent = async () => {
-      console.log("🚀 VoiceRecorder initializing for eventId:", eventId);
-
       await setupAudio();
-
-      console.log("🔍 Loading existing recording from database...");
       await loadExistingRecording();
     };
 
