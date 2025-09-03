@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Stack } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -139,8 +140,7 @@ export default function CalendarScreen() {
     if (Platform.OS === "android") {
       ToastAndroid.show(message, ToastAndroid.SHORT);
     } else {
-      // For iOS, we'll use a simple alert for now
-      // In a real app, you might want to use a proper toast library
+      // In a real app, I want to use a proper toast library
       console.log(message);
     }
   };
@@ -155,10 +155,11 @@ export default function CalendarScreen() {
     <View style={{ flex: 1, backgroundColor: Colors.warmWhite }}>
       <Stack.Screen
         options={{
-          title: "Event Calender",
+          title: "Gumbaynggirr Connect",
           headerShown: true,
-          headerStyle: { backgroundColor: Colors.warmWhite },
-          headerTitleStyle: { color: Colors.riverBlue, fontWeight: "600" },
+          headerBackVisible: false,
+          headerStyle: { backgroundColor: Colors.primaryOchre },
+          headerTitleStyle: { color: Colors.deepEarth, fontWeight: "800" },
         }}
       />
 
@@ -173,27 +174,6 @@ export default function CalendarScreen() {
           />
         }
       >
-        {/* Gumbaynggirr Connect Banner */}
-        <View
-          style={{
-            backgroundColor: Colors.primaryOchre,
-            paddingVertical: 16,
-            paddingHorizontal: 20,
-            marginBottom: 16,
-          }}
-        >
-          <Text
-            style={{
-              color: Colors.deepEarth,
-              fontSize: 24,
-              fontWeight: "bold",
-              textAlign: "center",
-            }}
-          >
-            Gumbaynggirr Connect
-          </Text>
-        </View>
-
         <View style={{ paddingHorizontal: 16 }}>
           {/* Month Navigator */}
           <View
@@ -209,25 +189,19 @@ export default function CalendarScreen() {
               onPress={() => navigateMonth("prev")}
               style={{
                 padding: 12,
-                backgroundColor: Colors.softGrey,
-                borderRadius: 8,
                 minWidth: 44,
                 alignItems: "center",
               }}
             >
-              <Text
-                style={{
-                  color: Colors.riverBlue,
-                  fontWeight: "700",
-                  fontSize: 20,
-                }}
-              >
-                ‹
-              </Text>
+              <Ionicons
+                name="chevron-back-outline"
+                size={20}
+                color={Colors.textDark}
+              />
             </Pressable>
             <Text
               style={{
-                color: Colors.deepEarth,
+                color: Colors.textDark,
                 fontWeight: "700",
                 fontSize: 20,
               }}
@@ -238,21 +212,15 @@ export default function CalendarScreen() {
               onPress={() => navigateMonth("next")}
               style={{
                 padding: 12,
-                backgroundColor: Colors.softGrey,
-                borderRadius: 8,
                 minWidth: 44,
                 alignItems: "center",
               }}
             >
-              <Text
-                style={{
-                  color: Colors.riverBlue,
-                  fontWeight: "700",
-                  fontSize: 20,
-                }}
-              >
-                ›
-              </Text>
+              <Ionicons
+                name="chevron-forward-outline"
+                size={20}
+                color={Colors.textDark}
+              />
             </Pressable>
           </View>
 
@@ -263,8 +231,16 @@ export default function CalendarScreen() {
               alignItems: "center",
               justifyContent: "center",
               marginBottom: 16,
+              backgroundColor: Colors.softGrey,
+              borderRadius: 8,
+              padding: 8,
             }}
           >
+            <Ionicons
+              name="hand-left-outline"
+              size={14}
+              color={Colors.textMedium}
+            />
             <Text
               style={{
                 color: Colors.textMedium,
@@ -272,7 +248,7 @@ export default function CalendarScreen() {
                 marginLeft: 4,
               }}
             >
-              🔒 Swipe left/right to change month • Tap dates to view events
+              Swipe left/right to change month • Tap dates to view events
             </Text>
           </View>
 
@@ -490,13 +466,19 @@ export default function CalendarScreen() {
                               alignItems: "center",
                             }}
                           >
+                            <Ionicons
+                              name="time-outline"
+                              size={14}
+                              color={Colors.textMedium}
+                            />
                             <Text
                               style={{
                                 color: Colors.textMedium,
                                 fontSize: 12,
+                                marginLeft: 4,
                               }}
                             >
-                              🕐 {ev.time}
+                              {ev.time}
                             </Text>
                           </View>
                         </View>
@@ -510,17 +492,31 @@ export default function CalendarScreen() {
           </View>
 
           {/* Pull to refresh hint */}
-          <Text
+          <View
             style={{
-              color: Colors.textMedium,
-              fontSize: 12,
-              textAlign: "center",
-              marginTop: 20,
-              marginBottom: 20,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 4,
             }}
           >
-            ↓ Pull down to refresh events
-          </Text>
+            <Ionicons
+              name="arrow-down-outline"
+              size={14}
+              color={Colors.textMedium}
+            />
+            <Text
+              style={{
+                color: Colors.textMedium,
+                fontSize: 12,
+                textAlign: "center",
+                marginTop: 20,
+                marginBottom: 20,
+              }}
+            >
+              Pull down to refresh events
+            </Text>
+          </View>
         </View>
       </ScrollView>
     </View>
