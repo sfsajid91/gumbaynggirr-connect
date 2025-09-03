@@ -15,7 +15,7 @@ import {
 import VoiceRecorder from "../../components/VoiceRecorder";
 import { Colors } from "../../constants/colors";
 import { useEvents } from "../../hooks/useEvents";
-import { getUserLocation, haversineKm } from "../../lib/location";
+import { fastDistanceKm, getUserLocation } from "../../lib/location";
 import { getStoredRecording, storeRecording } from "../../lib/storage";
 
 export default function EventDetails() {
@@ -45,7 +45,8 @@ export default function EventDetails() {
       const loc = await getUserLocation();
       if (!loc) return;
 
-      const km = haversineKm(
+      // Use faster equirectangular approximation for distance
+      const km = fastDistanceKm(
         { latitude: loc.coords.latitude, longitude: loc.coords.longitude },
         { latitude: event.lat, longitude: event.lon }
       );
@@ -113,11 +114,10 @@ export default function EventDetails() {
     }
   };
 
-  const handleSaveToCalendar = async () => {
-    // For now, just toggle the saved state
-    // TODO: Implement actual calendar integration when dependencies are available
+  const handleReminderToggle = async () => {
+    // For now, just toggle the reminder state
     setIsSaved(!isSaved);
-    console.log("Event saved to calendar (simulated)");
+    console.log("Event reminder toggled (simulated)");
   };
 
   const handleShareEvent = async () => {
@@ -253,7 +253,7 @@ export default function EventDetails() {
             color={Colors.textMedium}
           />
           <Text style={styles.helperText}>
-            Save to calendar, view map, share event, or download offline
+            Set a reminder, view map, share event, or download offline
           </Text>
         </View>
 
@@ -296,7 +296,7 @@ export default function EventDetails() {
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
           <Pressable
-            onPress={handleSaveToCalendar}
+            onPress={handleReminderToggle}
             style={({ pressed }) => [
               styles.actionButton,
               isSaved && styles.actionButtonActive,
@@ -308,7 +308,7 @@ export default function EventDetails() {
           >
             <View style={styles.actionButtonIcon}>
               <Ionicons
-                name={isSaved ? "bookmark" : "bookmark-outline"}
+                name={isSaved ? "notifications" : "notifications-outline"}
                 size={20}
                 color={isSaved ? Colors.primaryOchre : Colors.textDark}
               />
@@ -319,7 +319,7 @@ export default function EventDetails() {
                 isSaved && styles.actionButtonTextActive,
               ]}
             >
-              Save
+              Reminder
             </Text>
           </Pressable>
 

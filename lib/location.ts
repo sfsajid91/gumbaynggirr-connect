@@ -21,3 +21,19 @@ export function haversineKm(
     Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
   return 2 * R * Math.asin(Math.sqrt(h));
 }
+
+// Fast equirectangular approximation (~2x faster than haversine, accurate for short distances)
+export function fastDistanceKm(
+  a: { latitude: number; longitude: number },
+  b: { latitude: number; longitude: number }
+): number {
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const R = 6371; // km
+  const lat1 = toRad(a.latitude);
+  const lat2 = toRad(b.latitude);
+  const dLat = lat2 - lat1;
+  const dLon = toRad(b.longitude - a.longitude);
+  const x = dLon * Math.cos((lat1 + lat2) / 2);
+  const y = dLat;
+  return R * Math.sqrt(x * x + y * y);
+}
