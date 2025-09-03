@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Linking,
   Pressable,
   ScrollView,
@@ -26,7 +27,7 @@ export default function EventDetails() {
   const [existingRecording, setExistingRecording] = useState<string | null>(
     null
   );
-  const { events } = useEvents();
+  const { events, loading } = useEvents();
 
   const event = events.find((e) => e.id === String(id));
 
@@ -140,6 +141,24 @@ export default function EventDetails() {
     // TODO: Implement toast notification when react-native-toast-message is available
     ToastAndroid.show("Event is now available offline", ToastAndroid.SHORT);
   };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Stack.Screen
+          options={{
+            title: "Gumbaynggirr Connect",
+            headerShown: true,
+            headerStyle: { backgroundColor: Colors.deepEarth },
+            headerTintColor: "white",
+          }}
+        />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.primaryOchre} />
+        </View>
+      </View>
+    );
+  }
 
   if (!event) {
     return (
@@ -915,5 +934,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: Colors.primaryOchre,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: Colors.warmWhite,
   },
 });
