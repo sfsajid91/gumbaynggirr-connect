@@ -70,45 +70,90 @@ export async function getCachedEvents(): Promise<EventItem[]> {
 
 export async function storeRecording(
   eventId: string,
-  tempUri: string
+  tempUri: string,
+  durationMs?: number
 ): Promise<string> {
-  const db = await getDb();
+  try {
+    const db = await getDb();
 
-  // Ensure recordings directory exists
-  const dir = FileSystem.documentDirectory + "recordings/";
-  const dirInfo = await FileSystem.getInfoAsync(dir);
-  if (!dirInfo.exists) {
-    await FileSystem.makeDirectoryAsync(dir, { intermediates: true });
-  }
+    // Ensure recordings directory exists
+    const dir = FileSystem.documentDirectory + "recordings/";
+    const dirInfo = await FileSystem.getInfoAsync(dir);
+    if (!dirInfo.exists) {
+      await FileSystem.makeDirectoryAsync(dir, { intermediates: true });
+    }
 
-  // Remove any previous recording for this event (enforce one note per event)
-  const existing = await db.getFirstAsync<{ file_uri: string }>(
-    "SELECT file_uri FROM audio_notes WHERE event_id = ? ORDER BY created_at DESC LIMIT 1",
-    eventId
-  );
-  if (existing?.file_uri) {
-    try {
-      const info = await FileSystem.getInfoAsync(existing.file_uri);
-      if (info.exists) {
-        await FileSystem.deleteAsync(existing.file_uri, { idempotent: true });
+    // Remove any previous recording for this event (enforce one note per event)
+    const existing = await db.getFirstAsync<{ file_uri: string }>(
+      "SELECT file_uri FROM audio_notes WHERE event_id = ? ORDER BY created_at DESC LIMIT 1",
+      eventId
+    );
+
+    if (existing?.file_uri) {
+      try {
+        const info = await FileSystem.getInfoAsync(existing.file_uri);
+        if (info.exists) {
+          await FileSystem.deleteAsync(existing.file_uri, { idempotent: true });
+          console.log("🗑️ Deleted existing file:", existing.file_uri);
+        }
+      } catch (error) {
+        console.log("⚠️ Error deleting existing file:", error);
       }
-    } catch {}
-    await db.runAsync("DELETE FROM audio_notes WHERE event_id = ?", eventId);
+      await db.runAsync("DELETE FROM audio_notes WHERE event_id = ?", eventId);
+      console.log("🗑️ Deleted existing database entry for event:", eventId);
+    }
+
+    const filename = `${eventId}.m4a`;
+    const dest = dir + filename;
+    console.log("📋 Copying file from:", tempUri, "to:", dest);
+
+    // Check if source file exists before copying
+    const sourceInfo = await FileSystem.getInfoAsync(tempUri);
+    if (!sourceInfo.exists) {
+      throw new Error(`Source file does not exist: ${tempUri}`);
+    }
+    console.log("✅ Source file exists, proceeding with copy");
+
+    await FileSystem.copyAsync({ from: tempUri, to: dest });
+    console.log("✅ File copied successfully");
+
+    const insertResult = await db.runAsync(
+      `INSERT INTO audio_notes (event_id, file_uri, duration_ms, created_at) VALUES (?, ?, ?, ?)`,
+      eventId,
+      dest,
+      durationMs || null,
+      Date.now()
+    );
+    console.log("💾 Database insert result:", insertResult);
+    console.log(
+      "✅ Recording saved to database with duration:",
+      durationMs,
+      "ms"
+    );
+
+    // Verify the insert worked
+    const verify = await db.getFirstAsync<{
+      file_uri: string;
+      duration_ms: number | null;
+    }>(
+      "SELECT file_uri, duration_ms FROM audio_notes WHERE event_id = ? ORDER BY created_at DESC LIMIT 1",
+      eventId
+    );
+    console.log("🔍 Verification query result:", verify);
+
+    if (verify && verify.file_uri === dest) {
+      console.log("✅ Recording successfully saved to database!");
+    } else {
+      console.log(
+        "❌ Verification failed - recording may not have been saved properly"
+      );
+    }
+
+    return dest;
+  } catch (error) {
+    console.error("❌ Error in storeRecording:", error);
+    throw error;
   }
-
-  const filename = `${eventId}.m4a`;
-  const dest = dir + filename;
-  await FileSystem.copyAsync({ from: tempUri, to: dest });
-
-  await db.runAsync(
-    `INSERT INTO audio_notes (event_id, file_uri, duration_ms, created_at) VALUES (?, ?, ?, ?)`,
-    eventId,
-    dest,
-    null,
-    Date.now()
-  );
-
-  return dest;
 }
 
 export async function getStoredRecording(
@@ -120,6 +165,44 @@ export async function getStoredRecording(
     eventId
   );
   return row?.file_uri || null;
+}
+
+export async function getStoredRecordingWithDuration(
+  eventId: string
+): Promise<{ fileUri: string; durationMs: number | null } | null> {
+  console.log("🔍 getStoredRecordingWithDuration called for eventId:", eventId);
+
+  try {
+    const db = await getDb();
+    console.log("✅ Database connection established for query");
+
+    const row = await db.getFirstAsync<{
+      file_uri: string;
+      duration_ms: number | null;
+    }>(
+      "SELECT file_uri, duration_ms FROM audio_notes WHERE event_id = ? ORDER BY created_at DESC LIMIT 1",
+      eventId
+    );
+
+    console.log("🔍 Database query result:", row);
+
+    if (!row?.file_uri) {
+      console.log("❌ No recording found for eventId:", eventId);
+      return null;
+    }
+
+    console.log("✅ Found recording:", {
+      fileUri: row.file_uri,
+      durationMs: row.duration_ms,
+    });
+    return {
+      fileUri: row.file_uri,
+      durationMs: row.duration_ms,
+    };
+  } catch (error) {
+    console.error("❌ Error in getStoredRecordingWithDuration:", error);
+    return null;
+  }
 }
 
 export async function deleteStoredRecording(eventId: string): Promise<void> {

@@ -17,26 +17,15 @@ import VoiceRecorder from "../../components/VoiceRecorder";
 import { Colors } from "../../constants/colors";
 import { useEvents } from "../../hooks/useEvents";
 import { fastDistanceKm, getUserLocation } from "../../lib/location";
-import { getStoredRecording, storeRecording } from "../../lib/storage";
 
 export default function EventDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [travelTime, setTravelTime] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
-  const [existingRecording, setExistingRecording] = useState<string | null>(
-    null
-  );
   const { events, loading } = useEvents();
 
   const event = events.find((e) => e.id === String(id));
-
-  const loadExistingRecording = useCallback(async () => {
-    if (id) {
-      const recording = await getStoredRecording(String(id));
-      setExistingRecording(recording);
-    }
-  }, [id]);
 
   const updateLocationInfo = useCallback(async () => {
     if (!event || event.lat == null || event.lon == null) return;
@@ -67,9 +56,8 @@ export default function EventDetails() {
   }, [event]);
 
   useEffect(() => {
-    loadExistingRecording();
     updateLocationInfo();
-  }, [id, loadExistingRecording, updateLocationInfo]);
+  }, [id, updateLocationInfo]);
 
   const handleViewMap = async () => {
     if (!event || event.lat == null || event.lon == null) {
@@ -122,13 +110,6 @@ export default function EventDetails() {
         console.log("Error - Unable to open maps application", e);
         ToastAndroid.show("Unable to open maps", ToastAndroid.SHORT);
       }
-    }
-  };
-
-  const handleRecordingComplete = async (uri: string) => {
-    if (id) {
-      await storeRecording(String(id), uri);
-      setExistingRecording(uri);
     }
   };
 
@@ -292,11 +273,7 @@ export default function EventDetails() {
 
         {/* Voice Recorder - Inline */}
         <View style={{ paddingHorizontal: 20 }}>
-          <VoiceRecorder
-            eventId={String(id)}
-            onRecordingComplete={handleRecordingComplete}
-            existingRecording={existingRecording || undefined}
-          />
+          <VoiceRecorder eventId={String(id)} />
         </View>
 
         {/* Action Buttons */}
