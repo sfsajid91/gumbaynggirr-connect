@@ -3,8 +3,23 @@ import NetInfo from "@react-native-community/netinfo";
 import { Link } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
-import { Image, Pressable, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Colors } from "../constants/colors";
+
+const styles = StyleSheet.create({
+  card: {
+    width: "47%",
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 16,
+    paddingVertical: 24,
+    shadowColor: Colors.deepEarth,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
+  },
+});
 
 export default function App() {
   const [isOnline, setIsOnline] = useState(true);
@@ -102,19 +117,7 @@ export default function App() {
         }}
       >
         {/* Locations Card */}
-        <Pressable
-          style={{
-            width: "47%",
-            backgroundColor: "white",
-            borderRadius: 16,
-            padding: 20,
-            shadowColor: Colors.deepEarth,
-            shadowOpacity: 0.08,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: 6 },
-            elevation: 2,
-          }}
-        >
+        <Pressable style={styles.card}>
           <View
             style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}
           >
@@ -141,19 +144,7 @@ export default function App() {
         </Pressable>
 
         {/* Voice Notes Card */}
-        <Pressable
-          style={{
-            width: "47%",
-            backgroundColor: "white",
-            borderRadius: 16,
-            padding: 20,
-            shadowColor: Colors.deepEarth,
-            shadowOpacity: 0.08,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: 6 },
-            elevation: 2,
-          }}
-        >
+        <Pressable style={styles.card}>
           <View
             style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}
           >
@@ -176,19 +167,7 @@ export default function App() {
         </Pressable>
 
         {/* Community Card */}
-        <Pressable
-          style={{
-            width: "47%",
-            backgroundColor: "white",
-            borderRadius: 16,
-            padding: 20,
-            shadowColor: Colors.deepEarth,
-            shadowOpacity: 0.08,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: 6 },
-            elevation: 2,
-          }}
-        >
+        <Pressable style={styles.card}>
           <View
             style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}
           >
@@ -215,19 +194,7 @@ export default function App() {
         </Pressable>
 
         {/* Offline Ready Card */}
-        <View
-          style={{
-            width: "47%",
-            backgroundColor: "white",
-            borderRadius: 16,
-            padding: 20,
-            shadowColor: Colors.deepEarth,
-            shadowOpacity: 0.08,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: 6 },
-            elevation: 2,
-          }}
-        >
+        <View style={styles.card}>
           <View
             style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}
           >

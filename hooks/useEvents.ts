@@ -1,57 +1,44 @@
 import { useEffect, useState } from "react";
+import eventsData from "../data/events.json";
 import { getCachedEvents, saveEvents } from "../lib/storage";
 import { EventItem } from "../types/Event";
 
 export function useEvents() {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  const loadEvents = async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
+      // Load cached events first
+      const cached = await getCachedEvents();
+      if (cached.length > 0) {
+        setEvents(cached);
+      }
+
+      // Load from JSON file
+      const freshEvents = eventsData as EventItem[];
+      await saveEvents(freshEvents);
+      setEvents(freshEvents);
+    } catch (error) {
+      console.error("Error loading events:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    let mounted = true;
-    async function load() {
-      try {
-        setLoading(true);
-        const cached = await getCachedEvents();
-        if (mounted)
-          setEvents(
-            cached.length
-              ? cached
-              : [
-                  {
-                    id: "1",
-                    title: "Gumbaynggirr Language Circle",
-                    start: new Date().toISOString(),
-                    location: "Bowraville Hall",
-                    latitude: -30.651,
-                    longitude: 152.854,
-                  },
-                ]
-          );
-
-        // simulate remote fetch
-        if (typeof fetch !== "undefined") {
-          const fresh = [
-            {
-              id: "1",
-              title: "Gumbaynggirr Language Circle",
-              start: new Date().toISOString(),
-              location: "Bowraville Hall",
-              latitude: -30.651,
-              longitude: 152.854,
-            },
-          ] satisfies EventItem[];
-          await saveEvents(fresh);
-          if (mounted) setEvents(fresh);
-        }
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-    load();
-    return () => {
-      mounted = false;
-    };
+    loadEvents();
   }, []);
 
-  return { events, loading };
+  const refresh = () => loadEvents(true);
+
+  return { events, loading, refreshing, refresh };
 }

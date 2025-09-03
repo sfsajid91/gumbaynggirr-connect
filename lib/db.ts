@@ -5,19 +5,36 @@ let database: SQLite.SQLiteDatabase | null = null;
 export async function getDb(): Promise<SQLite.SQLiteDatabase> {
   if (database) return database;
   database = await SQLite.openDatabaseAsync("gumbaynggirr.db");
+
+  // Check if we need to migrate the events table
+  const tables = await database.getAllAsync(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name='events'"
+  );
+  if (tables.length > 0) {
+    // Check if the old schema exists (has 'start' column)
+    const columns = await database.getAllAsync("PRAGMA table_info(events)");
+    const hasOldSchema = columns.some((col: any) => col.name === "start");
+
+    if (hasOldSchema) {
+      // Drop the old table and recreate with new schema
+      await database.execAsync("DROP TABLE IF EXISTS events");
+    }
+  }
+
   await database.execAsync(
     `CREATE TABLE IF NOT EXISTS events (
       id TEXT PRIMARY KEY NOT NULL,
       title TEXT NOT NULL,
-      start TEXT,
-      end TEXT,
-      location TEXT,
-      address TEXT,
-      organizer TEXT,
-      heroImageUrl TEXT,
-      type TEXT,
-      latitude REAL,
-      longitude REAL
+      date TEXT NOT NULL,
+      time TEXT NOT NULL,
+      place TEXT NOT NULL,
+      host TEXT NOT NULL,
+      address TEXT NOT NULL,
+      lat REAL NOT NULL,
+      lon REAL NOT NULL,
+      about TEXT NOT NULL,
+      bring TEXT NOT NULL,
+      culture TEXT NOT NULL
     );`
   );
   await database.execAsync(

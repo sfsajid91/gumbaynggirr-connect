@@ -15,12 +15,12 @@ export default function EventDetails() {
 
   async function updateDistance() {
     const ev = events.find((e) => e.id === String(id));
-    if (!ev || ev.latitude == null || ev.longitude == null) return;
+    if (!ev || ev.lat == null || ev.lon == null) return;
     const loc = await getUserLocation();
     if (!loc) return;
     const km = haversineKm(
       { latitude: loc.coords.latitude, longitude: loc.coords.longitude },
-      { latitude: ev.latitude, longitude: ev.longitude }
+      { latitude: ev.lat, longitude: ev.lon }
     );
     setDistanceKm(Math.round(km * 10) / 10);
   }
