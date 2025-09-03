@@ -6,6 +6,7 @@ import {
   Linking,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   ToastAndroid,
@@ -122,18 +123,33 @@ export default function EventDetails() {
 
   const handleShareEvent = async () => {
     if (!event) return;
-    // For now, use basic sharing
-    // TODO: Implement vCard sharing when react-native-share is available
-    const eventDate = new Date(event.date + "T" + event.startTime);
-    const shareText = `${
-      event.title
-    }\n\nDate: ${eventDate.toLocaleDateString()}\nTime: ${event.startTime} - ${
-      event.endTime
-    }\nLocation: ${event.location || event.place}\nOrganizer: ${
-      event.organizer || event.host
-    }`;
+    try {
+      const start = new Date(event.startTime);
+      const end = new Date(event.endTime);
+      const lines = [
+        `${event.title}`,
+        "",
+        `Date: ${start.toLocaleDateString()}`,
+        `Time: ${start.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })} - ${end.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`,
+        `Location: ${event.address || event.location || event.place}`,
+        event.organizer || event.host
+          ? `Organizer: ${event.organizer || event.host}`
+          : "",
+        event.about ? "" : "",
+        event.about ? `About: ${event.about}` : "",
+      ].filter(Boolean);
 
-    console.log("Sharing event:", shareText);
+      await Share.share({ message: lines.join("\n") });
+    } catch (e) {
+      console.log("Error sharing event:", e);
+      ToastAndroid.show("Unable to share event", ToastAndroid.SHORT);
+    }
   };
 
   const handleOfflineMode = () => {
@@ -181,7 +197,7 @@ export default function EventDetails() {
           headerTintColor: "white",
           headerRight: () => (
             <Pressable
-              onPress={() => {}}
+              onPress={handleShareEvent}
               style={({ pressed }) => [
                 styles.shareButton,
                 {
@@ -319,7 +335,7 @@ export default function EventDetails() {
                 isSaved && styles.actionButtonTextActive,
               ]}
             >
-              Reminder
+              Remind me
             </Text>
           </Pressable>
 
