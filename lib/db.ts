@@ -35,7 +35,9 @@ export async function getDb(): Promise<SQLite.SQLiteDatabase> {
       lon REAL NOT NULL,
       about TEXT NOT NULL,
       bring TEXT NOT NULL,
-      culture TEXT NOT NULL
+      culture TEXT NOT NULL,
+      location TEXT,
+      organizer TEXT
     );`
   );
   await database.execAsync(

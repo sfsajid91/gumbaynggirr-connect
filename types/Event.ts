@@ -12,4 +12,6 @@ export type EventItem = {
   about: string;
   bring: string;
   culture: string;
+  location?: string; // Display location name
+  organizer?: string; // Event organizer name
 };
