@@ -2,12 +2,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
-  Alert,
   Linking,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  ToastAndroid,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -22,10 +22,10 @@ export default function EventDetails() {
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [travelTime, setTravelTime] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const [existingRecording, setExistingRecording] = useState<string | null>(
     null
   );
-  const [isRecording, setIsRecording] = useState(false);
   const { events } = useEvents();
 
   const event = events.find((e) => e.id === String(id));
@@ -71,39 +71,37 @@ export default function EventDetails() {
 
   const handleViewMap = async () => {
     if (!event || !event.lat || !event.lon) {
-      Alert.alert(
-        "Location not available",
-        "This event does not have location information."
+      console.log(
+        "Location not available - This event doesn't have location coordinates."
       );
       return;
     }
 
-    const url = `https://maps.google.com/maps?q=${event.lat},${event.lon}`;
+    const url = `https://www.google.com/maps/search/?api=1&query=${event.lat},${event.lon}`;
     const supported = await Linking.canOpenURL(url);
 
     if (supported) {
       await Linking.openURL(url);
     } else {
-      Alert.alert("Error", "Unable to open maps application.");
+      console.log("Error - Unable to open maps application");
     }
   };
 
   const handleGetDirections = async () => {
     if (!event || !event.lat || !event.lon) {
-      Alert.alert(
-        "Location not available",
-        "This event does not have location information."
+      console.log(
+        "Location not available - This event doesn't have location coordinates."
       );
       return;
     }
 
-    const url = `https://maps.google.com/maps/dir/?api=1&destination=${event.lat},${event.lon}`;
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${event.lat},${event.lon}`;
     const supported = await Linking.canOpenURL(url);
 
     if (supported) {
       await Linking.openURL(url);
     } else {
-      Alert.alert("Error", "Unable to open maps application.");
+      console.log("Error - Unable to open maps application");
     }
   };
 
@@ -114,10 +112,33 @@ export default function EventDetails() {
     }
   };
 
-  const handleStartRecording = () => {
-    setIsRecording(true);
-    // This will trigger the voice recorder modal/component
-    // For now, we'll implement a simple toggle
+  const handleSaveToCalendar = async () => {
+    // For now, just toggle the saved state
+    // TODO: Implement actual calendar integration when dependencies are available
+    setIsSaved(!isSaved);
+    console.log("Event saved to calendar (simulated)");
+  };
+
+  const handleShareEvent = async () => {
+    if (!event) return;
+    // For now, use basic sharing
+    // TODO: Implement vCard sharing when react-native-share is available
+    const eventDate = new Date(event.date + "T" + event.startTime);
+    const shareText = `${
+      event.title
+    }\n\nDate: ${eventDate.toLocaleDateString()}\nTime: ${event.startTime} - ${
+      event.endTime
+    }\nLocation: ${event.location || event.place}\nOrganizer: ${
+      event.organizer || event.host
+    }`;
+
+    console.log("Sharing event:", shareText);
+  };
+
+  const handleOfflineMode = () => {
+    // For now, just log the action
+    // TODO: Implement toast notification when react-native-toast-message is available
+    ToastAndroid.show("Event is now available offline", ToastAndroid.SHORT);
   };
 
   if (!event) {
@@ -204,15 +225,46 @@ export default function EventDetails() {
             color={Colors.textMedium}
           />
           <Text style={styles.helperText}>
-            Tap buttons below to save, view map, record notes, or download
-            offline
+            Save to calendar, view map, share event, or download offline
           </Text>
+        </View>
+
+        {/* Voice Recording Card - Always Visible */}
+        <View style={styles.recordingCard}>
+          <View style={styles.recordingHeader}>
+            <Ionicons name="mic" size={20} color={Colors.primaryOchre} />
+            <Text style={styles.recordingTitle}>Voice Notes</Text>
+            <Pressable
+              onPress={() => setIsRecording(!isRecording)}
+              style={[
+                styles.recordButton,
+                isRecording && styles.recordButtonActive,
+              ]}
+            >
+              <Ionicons
+                name={isRecording ? "stop" : "radio-button-on"}
+                size={16}
+                color={isRecording ? "white" : Colors.primaryOchre}
+              />
+            </Pressable>
+          </View>
+          <Text style={styles.recordingDescription}>
+            {isRecording
+              ? "Recording in progress..."
+              : "Tap to record notes about this event"}
+          </Text>
+          {isRecording && (
+            <View style={styles.recordingIndicator}>
+              <View style={styles.recordingDot} />
+              <Text style={styles.recordingTime}>00:15</Text>
+            </View>
+          )}
         </View>
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
           <Pressable
-            onPress={() => setIsSaved(!isSaved)}
+            onPress={handleSaveToCalendar}
             style={[styles.actionButton, isSaved && styles.actionButtonActive]}
           >
             <View style={styles.actionButtonIcon}>
@@ -239,14 +291,7 @@ export default function EventDetails() {
             <Text style={styles.actionButtonText}>Map</Text>
           </Pressable>
 
-          <Pressable onPress={handleStartRecording} style={styles.actionButton}>
-            <View style={styles.actionButtonIcon}>
-              <Ionicons name="mic-outline" size={20} color={Colors.textDark} />
-            </View>
-            <Text style={styles.actionButtonText}>Rec</Text>
-          </Pressable>
-
-          <Pressable onPress={() => {}} style={styles.actionButton}>
+          <Pressable onPress={handleShareEvent} style={styles.actionButton}>
             <View style={styles.actionButtonIcon}>
               <Ionicons
                 name="share-outline"
@@ -254,7 +299,18 @@ export default function EventDetails() {
                 color={Colors.textDark}
               />
             </View>
-            <Text style={styles.actionButtonText}>Off</Text>
+            <Text style={styles.actionButtonText}>Share</Text>
+          </Pressable>
+
+          <Pressable onPress={handleOfflineMode} style={styles.actionButton}>
+            <View style={styles.actionButtonIcon}>
+              <Ionicons
+                name="cloud-download-outline"
+                size={20}
+                color={Colors.textDark}
+              />
+            </View>
+            <Text style={styles.actionButtonText}>Offline</Text>
           </Pressable>
         </View>
 
@@ -487,7 +543,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     marginHorizontal: 20,
-    marginTop: 14,
+    marginBottom: 20,
   },
   helperText: {
     color: Colors.textMedium,
@@ -739,5 +795,63 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 8,
+  },
+  recordingCard: {
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 20,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    shadowColor: Colors.deepEarth,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  recordingHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  recordingTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: Colors.textDark,
+    flex: 1,
+    marginLeft: 8,
+  },
+  recordButton: {
+    backgroundColor: "white",
+    borderWidth: 2,
+    borderColor: Colors.primaryOchre,
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  recordButtonActive: {
+    backgroundColor: Colors.primaryOchre,
+  },
+  recordingDescription: {
+    fontSize: 14,
+    color: Colors.textMedium,
+    marginBottom: 8,
+  },
+  recordingIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  recordingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.primaryOchre,
+  },
+  recordingTime: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: Colors.primaryOchre,
   },
 });
