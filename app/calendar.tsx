@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -43,9 +43,24 @@ export default function CalendarScreen() {
   const todayButtonOpacity = useSharedValue(0);
   const todayButtonScale = useSharedValue(0.8);
 
+  // Navigation state tracking to prevent multiple navigation
+  const isNavigating = useRef(false);
+  const navigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+
   // Set today as default selected date
   useEffect(() => {
     setSelectedDate(new Date());
+  }, []);
+
+  // Cleanup navigation timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current);
+      }
+    };
   }, []);
 
   const current = useMemo(() => {
@@ -233,10 +248,32 @@ export default function CalendarScreen() {
     return `${formatTime(startTime)} - ${formatTime(endTime)}`;
   };
 
-  // Handle event press
-  const handleEventPress = (event: EventItem) => {
-    router.push(`/event/${event.id}`);
-  };
+  // Handle event press with debouncing to prevent multiple navigation
+  const handleEventPress = useCallback(
+    (event: EventItem) => {
+      // Prevent multiple navigation calls
+      if (isNavigating.current) {
+        return;
+      }
+
+      // Set navigation state to prevent additional calls
+      isNavigating.current = true;
+
+      // Clear any existing timeout
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current);
+      }
+
+      // Navigate to the event
+      router.push(`/event/${event.id}`);
+
+      // Reset navigation state after a short delay
+      navigationTimeoutRef.current = setTimeout(() => {
+        isNavigating.current = false;
+      }, 1000); // 1 second debounce period
+    },
+    [router]
+  );
 
   // Show toast notification
   const showToast = (message: string) => {
