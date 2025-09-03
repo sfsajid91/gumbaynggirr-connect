@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "gumbaynggirr-connect",
+    "name": "Gumbaynggirr Connect",
     "slug": "gumbaynggirr-connect",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/og-icon.png",
     "scheme": "gumbaynggirrconnect",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -28,14 +28,14 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/og-icon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/og-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
