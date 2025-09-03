@@ -117,106 +117,106 @@ export default function App() {
         }}
       >
         {/* Locations Card */}
-        <Pressable style={styles.card}>
-          <View
-            style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}
-          >
-            <Ionicons
-              name="location-outline"
-              size={24}
-              color={Colors.riverBlue}
-            />
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  fontWeight: "700",
-                  color: Colors.textDark,
-                  marginBottom: 4,
-                }}
-              >
-                Locations
-              </Text>
-              <Text style={{ fontSize: 14, color: Colors.textMedium }}>
-                Find venues
-              </Text>
-            </View>
+        <View
+          style={[
+            styles.card,
+            { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+          ]}
+        >
+          <Ionicons
+            name="location-outline"
+            size={24}
+            color={Colors.riverBlue}
+          />
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                fontWeight: "700",
+                color: Colors.textDark,
+                marginBottom: 4,
+              }}
+            >
+              Locations
+            </Text>
+            <Text style={{ fontSize: 14, color: Colors.textMedium }}>
+              Find venues
+            </Text>
           </View>
-        </Pressable>
+        </View>
 
         {/* Voice Notes Card */}
-        <Pressable style={styles.card}>
-          <View
-            style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}
-          >
-            <Ionicons name="mic-outline" size={24} color={Colors.sunsetRed} />
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  fontWeight: "700",
-                  color: Colors.textDark,
-                  marginBottom: 4,
-                }}
-              >
-                Voice Notes
-              </Text>
-              <Text style={{ fontSize: 14, color: Colors.textMedium }}>
-                Record thoughts
-              </Text>
-            </View>
+        <View
+          style={[
+            styles.card,
+            { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+          ]}
+        >
+          <Ionicons name="mic-outline" size={24} color={Colors.sunsetRed} />
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                fontWeight: "700",
+                color: Colors.textDark,
+                marginBottom: 4,
+              }}
+            >
+              Voice Notes
+            </Text>
+            <Text style={{ fontSize: 14, color: Colors.textMedium }}>
+              Record thoughts
+            </Text>
           </View>
-        </Pressable>
+        </View>
 
         {/* Community Card */}
-        <Pressable style={styles.card}>
-          <View
-            style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}
-          >
-            <Ionicons
-              name="people-outline"
-              size={24}
-              color={Colors.primaryOchre}
-            />
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  fontWeight: "700",
-                  color: Colors.textDark,
-                  marginBottom: 4,
-                }}
-              >
-                Community
-              </Text>
-              <Text style={{ fontSize: 14, color: Colors.textMedium }}>
-                Connect with others
-              </Text>
-            </View>
+        <View
+          style={[
+            styles.card,
+            { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+          ]}
+        >
+          <Ionicons
+            name="people-outline"
+            size={24}
+            color={Colors.primaryOchre}
+          />
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                fontWeight: "700",
+                color: Colors.textDark,
+                marginBottom: 4,
+              }}
+            >
+              Community
+            </Text>
+            <Text style={{ fontSize: 14, color: Colors.textMedium }}>
+              Connect with others
+            </Text>
           </View>
-        </Pressable>
+        </View>
 
         {/* Offline Ready Card */}
-        <View style={styles.card}>
-          <View
-            style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}
-          >
-            <Ionicons
-              name="wifi-outline"
-              size={24}
-              color={Colors.successGreen}
-            />
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  fontWeight: "700",
-                  color: Colors.textDark,
-                  marginBottom: 4,
-                }}
-              >
-                Offline Ready
-              </Text>
-              <Text style={{ fontSize: 14, color: Colors.textMedium }}>
-                Works anywhere
-              </Text>
-            </View>
+        <View
+          style={[
+            styles.card,
+            { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+          ]}
+        >
+          <Ionicons name="wifi-outline" size={24} color={Colors.successGreen} />
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                fontWeight: "700",
+                color: Colors.textDark,
+                marginBottom: 4,
+              }}
+            >
+              Offline Ready
+            </Text>
+            <Text style={{ fontSize: 14, color: Colors.textMedium }}>
+              Works anywhere
+            </Text>
           </View>
         </View>
       </View>

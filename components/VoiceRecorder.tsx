@@ -1,8 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Audio } from "expo-av";
-import React, { useEffect, useState, useRef } from "react";
+import { useAudioPlayer } from "expo-audio";
+import React, { useEffect, useRef, useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Colors } from "../constants/colors";
+import {
+  startRecording as startExpoRecording,
+  stopAndSaveRecording,
+} from "../lib/audio";
 import { deleteStoredRecording, getStoredRecording } from "../lib/storage";
 import WaveVisualization from "./WaveVisualization";
 
@@ -20,46 +24,26 @@ export default function VoiceRecorder({
   const [recordingUri, setRecordingUri] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [recorder, setRecorder] = useState<any | null>(null);
   const [recordingDuration, setRecordingDuration] = useState(0);
-  const [permissionResponse, requestPermission] = Audio.usePermissions();
-  const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const durationIntervalRef = useRef<number | null>(null);
+
+  const player = useAudioPlayer(recordingUri ?? "");
 
   const startRecording = async () => {
     try {
-      if (permissionResponse?.status !== 'granted') {
-        console.log('Requesting permission..');
-        const permission = await requestPermission();
-        if (!permission.granted) {
-          Alert.alert(
-            "Permission required",
-            "Please allow microphone access to record audio."
-          );
-          return;
-        }
-      }
-
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      console.log('Starting recording..');
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
-      
-      setRecording(recording);
+      console.log("Starting recording..");
+      const rec = await startExpoRecording();
+      setRecorder(rec);
       setIsRecording(true);
       setRecordingDuration(0);
 
       // Update duration every second
       durationIntervalRef.current = setInterval(() => {
         setRecordingDuration((prev) => prev + 1);
-      }, 1000);
+      }, 1000) as unknown as number;
 
-      console.log('Recording started');
+      console.log("Recording started");
     } catch (error) {
       console.error("Failed to start recording:", error);
       Alert.alert("Error", "Failed to start recording. Please try again.");
@@ -67,10 +51,10 @@ export default function VoiceRecorder({
   };
 
   const stopRecording = async () => {
-    if (!recording) return;
+    if (!recorder) return;
 
     try {
-      console.log('Stopping recording..');
+      console.log("Stopping recording..");
       setIsRecording(false);
 
       // Clear the duration interval
@@ -79,20 +63,13 @@ export default function VoiceRecorder({
         durationIntervalRef.current = null;
       }
 
-      await recording.stopAndUnloadAsync();
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-      });
-      
-      const uri = recording.getURI();
-      console.log('Recording stopped and stored at', uri);
-
-      if (uri) {
-        setRecordingUri(uri);
-        onRecordingComplete?.(uri);
+      const dest = await stopAndSaveRecording(eventId, recorder);
+      if (dest) {
+        setRecordingUri(dest);
+        onRecordingComplete?.(dest);
       }
 
-      setRecording(null);
+      setRecorder(null);
     } catch (err) {
       console.error("Failed to stop recording", err);
       Alert.alert("Error", "Failed to stop recording.");
@@ -100,29 +77,10 @@ export default function VoiceRecorder({
   };
 
   const playRecording = async () => {
-    if (!recordingUri) return;
-
+    if (!recordingUri || !player) return;
     try {
-      if (sound) {
-        await sound.unloadAsync();
-      }
-
-      console.log('Loading Sound');
-      const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri: recordingUri },
-        { shouldPlay: true }
-      );
-      
-      setSound(newSound);
+      await player.play();
       setIsPlaying(true);
-
-      newSound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded && status.didJustFinish) {
-          setIsPlaying(false);
-        }
-      });
-
-      console.log('Playing Sound');
     } catch (err) {
       console.error("Failed to play recording", err);
       Alert.alert("Error", "Failed to play recording.");
@@ -131,10 +89,8 @@ export default function VoiceRecorder({
 
   const stopPlayback = async () => {
     try {
-      if (sound) {
-        await sound.stopAsync();
-        setIsPlaying(false);
-      }
+      if (player?.pause) await player.pause();
+      setIsPlaying(false);
     } catch (err) {
       console.error("Failed to stop playback", err);
     }
@@ -151,16 +107,12 @@ export default function VoiceRecorder({
           style: "destructive",
           onPress: async () => {
             try {
-              if (sound) {
-                await sound.unloadAsync();
-                setSound(null);
-              }
               await deleteStoredRecording(eventId);
               setRecordingUri(null);
               setRecordingDuration(0);
               setIsPlaying(false);
             } catch (error) {
-              console.error('Failed to delete recording:', error);
+              console.error("Failed to delete recording:", error);
             }
           },
         },
@@ -191,18 +143,14 @@ export default function VoiceRecorder({
 
   useEffect(() => {
     return () => {
-      // Cleanup on unmount
       if (durationIntervalRef.current) {
         clearInterval(durationIntervalRef.current);
       }
-      if (sound) {
-        sound.unloadAsync();
-      }
-      if (recording) {
-        recording.stopAndUnloadAsync();
-      }
+      try {
+        if (player?.pause) player.pause();
+      } catch {}
     };
-  }, [sound, recording]);
+  }, [player]);
 
   return (
     <View style={styles.container}>
