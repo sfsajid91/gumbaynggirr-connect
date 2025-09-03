@@ -6,7 +6,6 @@ interface WaveVisualizationProps {
   isRecording: boolean;
   isPlaying: boolean;
   duration?: number;
-  audioData?: number[];
 }
 
 const barCount = 24;
@@ -18,8 +17,7 @@ const minHeight = 4;
 export default function WaveVisualization({ 
   isRecording, 
   isPlaying, 
-  duration = 0,
-  audioData = []
+  duration = 0
 }: WaveVisualizationProps) {
   const animatedValues = useRef(
     Array.from({ length: barCount }, () => new Animated.Value(minHeight))
@@ -57,25 +55,7 @@ export default function WaveVisualization({
     }
   }, [isRecording, isPlaying, animatedValues]);
 
-  // Update bars based on actual audio data if available
-  useEffect(() => {
-    if (audioData.length > 0 && !isRecording) {
-      const dataPerBar = Math.ceil(audioData.length / barCount);
-      const animations = animatedValues.map((value, index) => {
-        const startIdx = index * dataPerBar;
-        const endIdx = Math.min(startIdx + dataPerBar, audioData.length);
-        const barData = audioData.slice(startIdx, endIdx);
-        const avgAmplitude = barData.reduce((sum, val) => sum + Math.abs(val), 0) / barData.length;
-        const barHeight = minHeight + (avgAmplitude * (maxHeight - minHeight));
-        return Animated.timing(value, {
-          toValue: barHeight,
-          duration: 100,
-          useNativeDriver: false,
-        });
-      });
-      Animated.parallel(animations).start();
-    }
-  }, [audioData, animatedValues, isRecording]);
+  // Audio data visualization removed for optimization
 
   const getBarColor = () => {
     if (isRecording) return Colors.sunsetRed;

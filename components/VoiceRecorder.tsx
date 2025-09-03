@@ -1,13 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import {
-  AudioModule,
-  AudioRecorder,
-  RecordingPresets,
-  setAudioModeAsync,
-} from "expo-audio";
-import React, { useEffect, useState } from "react";
+import { Audio } from "expo-av";
+import React, { useEffect, useState, useRef } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-// import { AudioStudio } from '@siteed/expo-audio-studio'; // Optional enhancement
 import { Colors } from "../constants/colors";
 import { deleteStoredRecording, getStoredRecording } from "../lib/storage";
 import WaveVisualization from "./WaveVisualization";
@@ -26,49 +20,46 @@ export default function VoiceRecorder({
   const [recordingUri, setRecordingUri] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [audioData, setAudioData] = useState<number[]>([]);
-  const [audioStudio] = useState<any>(null);
-  const [recording, setRecording] = useState<AudioRecorder | null>(null);
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [recordingDuration, setRecordingDuration] = useState(0);
+  const [permissionResponse, requestPermission] = Audio.usePermissions();
+  const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const startRecording = async () => {
     try {
-      const permission = await AudioModule.requestRecordingPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert(
-          "Permission required",
-          "Please allow microphone access to record audio."
-        );
-        return;
+      if (permissionResponse?.status !== 'granted') {
+        console.log('Requesting permission..');
+        const permission = await requestPermission();
+        if (!permission.granted) {
+          Alert.alert(
+            "Permission required",
+            "Please allow microphone access to record audio."
+          );
+          return;
+        }
       }
 
-      await setAudioModeAsync({
-        allowsRecording: true,
-        playsInSilentMode: true,
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
       });
 
-      const newRecording = new AudioRecorder(RecordingPresets.HIGH_QUALITY);
-      await newRecording.prepareToRecordAsync();
-
-      // Start audio analysis if AudioStudio is available
-      if (audioStudio) {
-        audioStudio.startAnalysis((data: any) => {
-          setAudioData(data.waveform || []);
-        });
-      }
-
-      newRecording.record();
-      setRecording(newRecording);
+      console.log('Starting recording..');
+      const { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+      
+      setRecording(recording);
       setIsRecording(true);
       setRecordingDuration(0);
 
       // Update duration every second
-      const interval = setInterval(() => {
+      durationIntervalRef.current = setInterval(() => {
         setRecordingDuration((prev) => prev + 1);
       }, 1000);
 
-      // Store interval reference to clear it later
-      (newRecording as any).durationInterval = interval;
+      console.log('Recording started');
     } catch (error) {
       console.error("Failed to start recording:", error);
       Alert.alert("Error", "Failed to start recording. Please try again.");
@@ -79,15 +70,22 @@ export default function VoiceRecorder({
     if (!recording) return;
 
     try {
+      console.log('Stopping recording..');
       setIsRecording(false);
 
       // Clear the duration interval
-      if ((recording as any).durationInterval) {
-        clearInterval((recording as any).durationInterval);
+      if (durationIntervalRef.current) {
+        clearInterval(durationIntervalRef.current);
+        durationIntervalRef.current = null;
       }
 
-      await recording.stop();
-      const uri = recording.uri;
+      await recording.stopAndUnloadAsync();
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+      });
+      
+      const uri = recording.getURI();
+      console.log('Recording stopped and stored at', uri);
 
       if (uri) {
         setRecordingUri(uri);
@@ -105,14 +103,26 @@ export default function VoiceRecorder({
     if (!recordingUri) return;
 
     try {
-      // For now, just show that playback would start
-      // Full playback implementation would require additional expo-audio setup
+      if (sound) {
+        await sound.unloadAsync();
+      }
+
+      console.log('Loading Sound');
+      const { sound: newSound } = await Audio.Sound.createAsync(
+        { uri: recordingUri },
+        { shouldPlay: true }
+      );
+      
+      setSound(newSound);
       setIsPlaying(true);
 
-      // Simulate playback duration (you would implement actual playback here)
-      setTimeout(() => {
-        setIsPlaying(false);
-      }, recordingDuration * 1000);
+      newSound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded && status.didJustFinish) {
+          setIsPlaying(false);
+        }
+      });
+
+      console.log('Playing Sound');
     } catch (err) {
       console.error("Failed to play recording", err);
       Alert.alert("Error", "Failed to play recording.");
@@ -120,10 +130,17 @@ export default function VoiceRecorder({
   };
 
   const stopPlayback = async () => {
-    setIsPlaying(false);
+    try {
+      if (sound) {
+        await sound.stopAsync();
+        setIsPlaying(false);
+      }
+    } catch (err) {
+      console.error("Failed to stop playback", err);
+    }
   };
 
-  const deleteRecording = () => {
+  const deleteRecording = async () => {
     Alert.alert(
       "Delete Recording",
       "Are you sure you want to delete this voice note?",
@@ -132,11 +149,19 @@ export default function VoiceRecorder({
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => {
-            deleteStoredRecording(eventId).catch(() => {});
-            setRecordingUri(null);
-            setRecordingDuration(0);
-            setIsPlaying(false);
+          onPress: async () => {
+            try {
+              if (sound) {
+                await sound.unloadAsync();
+                setSound(null);
+              }
+              await deleteStoredRecording(eventId);
+              setRecordingUri(null);
+              setRecordingDuration(0);
+              setIsPlaying(false);
+            } catch (error) {
+              console.error('Failed to delete recording:', error);
+            }
           },
         },
       ]
@@ -162,20 +187,22 @@ export default function VoiceRecorder({
 
   useEffect(() => {
     loadExistingRecording();
-    initializeAudioStudio();
   }, [eventId]);
 
-  const initializeAudioStudio = async () => {
-    try {
-      // const { AudioStudio } = await import('@siteed/expo-audio-studio');
-      // const studio = new AudioStudio();
-      // await studio.initialize();
-      // setAudioStudio(studio);
-      console.log("AudioStudio integration ready for future enhancement");
-    } catch {
-      console.log("AudioStudio not available, using fallback");
-    }
-  };
+  useEffect(() => {
+    return () => {
+      // Cleanup on unmount
+      if (durationIntervalRef.current) {
+        clearInterval(durationIntervalRef.current);
+      }
+      if (sound) {
+        sound.unloadAsync();
+      }
+      if (recording) {
+        recording.stopAndUnloadAsync();
+      }
+    };
+  }, [sound, recording]);
 
   return (
     <View style={styles.container}>
@@ -195,7 +222,6 @@ export default function VoiceRecorder({
         isRecording={isRecording}
         isPlaying={isPlaying}
         duration={recordingDuration}
-        audioData={audioData}
       />
 
       <View style={styles.controls}>
@@ -223,7 +249,7 @@ export default function VoiceRecorder({
         ) : (
           <View style={styles.playbackControls}>
             <TouchableOpacity
-              onPress={playRecording}
+              onPress={isPlaying ? stopPlayback : playRecording}
               style={[
                 styles.playButton,
                 {
