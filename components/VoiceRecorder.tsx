@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useAudioPlayer } from "expo-audio";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Colors } from "../constants/colors";
 import {
@@ -28,7 +28,7 @@ export default function VoiceRecorder({
   const [recordingDuration, setRecordingDuration] = useState(0);
   const durationIntervalRef = useRef<number | null>(null);
 
-  const player = useAudioPlayer(recordingUri ?? "");
+  const player = useAudioPlayer(recordingUri || undefined);
 
   const startRecording = async () => {
     try {
@@ -44,9 +44,12 @@ export default function VoiceRecorder({
       }, 1000) as unknown as number;
 
       console.log("Recording started");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to start recording:", error);
-      Alert.alert("Error", "Failed to start recording. Please try again.");
+      const message = error?.message?.includes("permission")
+        ? "Microphone permission is required to record audio. Please enable it in Settings."
+        : "Failed to start recording. Please try again.";
+      Alert.alert("Recording", message);
     }
   };
 
@@ -126,7 +129,7 @@ export default function VoiceRecorder({
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const loadExistingRecording = async () => {
+  const loadExistingRecording = useCallback(async () => {
     try {
       const existingRecording = await getStoredRecording(eventId);
       if (existingRecording) {
@@ -135,11 +138,15 @@ export default function VoiceRecorder({
     } catch (error) {
       console.error("Failed to load existing recording:", error);
     }
-  };
+  }, [eventId]);
 
   useEffect(() => {
+    if (existingRecording) {
+      setRecordingUri(existingRecording);
+      return;
+    }
     loadExistingRecording();
-  }, [eventId]);
+  }, [eventId, existingRecording, loadExistingRecording]);
 
   useEffect(() => {
     return () => {

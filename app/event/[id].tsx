@@ -11,7 +11,6 @@ import {
   StyleSheet,
   Text,
   ToastAndroid,
-  TouchableOpacity,
   View,
 } from "react-native";
 import VoiceRecorder from "../../components/VoiceRecorder";
@@ -25,7 +24,6 @@ export default function EventDetails() {
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [travelTime, setTravelTime] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
   const [existingRecording, setExistingRecording] = useState<string | null>(
     null
   );
@@ -292,40 +290,13 @@ export default function EventDetails() {
           </Text>
         </View>
 
-        {/* Voice Recording Card - Always Visible */}
-        <View style={styles.recordingCard}>
-          <View style={styles.recordingHeader}>
-            <Ionicons name="mic" size={20} color={Colors.primaryOchre} />
-            <Text style={styles.recordingTitle}>Voice Notes</Text>
-            <Pressable
-              onPress={() => setIsRecording(!isRecording)}
-              style={({ pressed }) => [
-                styles.recordButton,
-                isRecording && styles.recordButtonActive,
-                {
-                  opacity: pressed ? 0.85 : 1,
-                  transform: [{ scale: pressed ? 0.95 : 1 }],
-                },
-              ]}
-            >
-              <Ionicons
-                name={isRecording ? "stop" : "radio-button-on"}
-                size={16}
-                color={isRecording ? "white" : Colors.primaryOchre}
-              />
-            </Pressable>
-          </View>
-          <Text style={styles.recordingDescription}>
-            {isRecording
-              ? "Recording in progress..."
-              : "Tap to record notes about this event"}
-          </Text>
-          {isRecording && (
-            <View style={styles.recordingIndicator}>
-              <View style={styles.recordingDot} />
-              <Text style={styles.recordingTime}>00:15</Text>
-            </View>
-          )}
+        {/* Voice Recorder - Inline */}
+        <View style={{ paddingHorizontal: 20 }}>
+          <VoiceRecorder
+            eventId={String(id)}
+            onRecordingComplete={handleRecordingComplete}
+            existingRecording={existingRecording || undefined}
+          />
         </View>
 
         {/* Action Buttons */}
@@ -511,22 +482,7 @@ export default function EventDetails() {
           </View>
         )}
 
-        {/* Voice Recorder */}
-        {isRecording && (
-          <View style={styles.voiceRecorderContainer}>
-            <VoiceRecorder
-              eventId={String(id)}
-              onRecordingComplete={handleRecordingComplete}
-              existingRecording={existingRecording || undefined}
-            />
-            <TouchableOpacity
-              style={styles.closeRecorderButton}
-              onPress={() => setIsRecording(false)}
-            >
-              <Ionicons name="close" size={24} color={Colors.textDark} />
-            </TouchableOpacity>
-          </View>
-        )}
+        {/* Voice Recorder bottom sheet removed in favor of inline component */}
 
         {/* Event Details */}
         <View style={styles.detailCard}>
@@ -884,91 +840,10 @@ const styles = StyleSheet.create({
     color: Colors.textDark,
     marginBottom: 4,
   },
-  closeRecorderButton: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: Colors.softGrey,
-  },
   countryNoteText: {
     fontSize: 14,
     color: Colors.textDark,
     lineHeight: 20,
-  },
-  voiceRecorderContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "white",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    shadowColor: Colors.deepEarth,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  recordingCard: {
-    backgroundColor: "white",
-    borderRadius: 16,
-    padding: 20,
-    marginHorizontal: 20,
-    marginBottom: 16,
-    shadowColor: Colors.deepEarth,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  recordingHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  recordingTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: Colors.textDark,
-    flex: 1,
-    marginLeft: 8,
-  },
-  recordButton: {
-    backgroundColor: "white",
-    borderWidth: 2,
-    borderColor: Colors.primaryOchre,
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  recordButtonActive: {
-    backgroundColor: Colors.primaryOchre,
-  },
-  recordingDescription: {
-    fontSize: 14,
-    color: Colors.textMedium,
-    marginBottom: 8,
-  },
-  recordingIndicator: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  recordingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.primaryOchre,
-  },
-  recordingTime: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: Colors.primaryOchre,
   },
   loadingContainer: {
     flex: 1,
