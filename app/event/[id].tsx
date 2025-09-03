@@ -1,13 +1,24 @@
-import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams } from "expo-router";
+import {
+  Bell,
+  Building,
+  Clock,
+  CloudDownload,
+  Info,
+  Map,
+  MapPin,
+  Navigation,
+  Share,
+  User,
+} from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Linking,
   Platform,
   Pressable,
+  Share as RNShare,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   ToastAndroid,
@@ -143,7 +154,7 @@ export default function EventDetails() {
         event.about ? `About: ${event.about}` : "",
       ].filter(Boolean);
 
-      await Share.share({ message: lines.join("\n") });
+      await RNShare.share({ message: lines.join("\n") });
     } catch (e) {
       console.log("Error sharing event:", e);
       ToastAndroid.show("Unable to share event", ToastAndroid.SHORT);
@@ -204,7 +215,7 @@ export default function EventDetails() {
                 },
               ]}
             >
-              <Ionicons name="share-outline" size={24} color="white" />
+              <Share size={24} color="white" />
             </Pressable>
           ),
         }}
@@ -237,21 +248,13 @@ export default function EventDetails() {
               })}
             </Text>
             <View style={styles.locationRow}>
-              <Ionicons
-                name="location-outline"
-                size={16}
-                color={Colors.textMedium}
-              />
+              <MapPin size={16} color={Colors.textMedium} />
               <Text style={styles.eventLocation}>
                 {event.location || event.place}
               </Text>
             </View>
             <View style={styles.organizerRow}>
-              <Ionicons
-                name="person-outline"
-                size={16}
-                color={Colors.textMedium}
-              />
+              <User size={16} color={Colors.textMedium} />
               <Text style={styles.eventOrganizer}>
                 {event.organizer || event.host}
               </Text>
@@ -261,11 +264,7 @@ export default function EventDetails() {
 
         {/* Helper hint */}
         <View style={styles.helperCard}>
-          <Ionicons
-            name="information-circle-outline"
-            size={16}
-            color={Colors.textMedium}
-          />
+          <Info size={16} color={Colors.textMedium} />
           <Text style={styles.helperText}>
             Set a reminder, view map, share event, or download offline
           </Text>
@@ -290,8 +289,7 @@ export default function EventDetails() {
             ]}
           >
             <View style={styles.actionButtonIcon}>
-              <Ionicons
-                name={isSaved ? "notifications" : "notifications-outline"}
+              <Bell
                 size={20}
                 color={isSaved ? Colors.primaryOchre : Colors.textDark}
               />
@@ -317,7 +315,7 @@ export default function EventDetails() {
             ]}
           >
             <View style={styles.actionButtonIcon}>
-              <Ionicons name="map-outline" size={20} color={Colors.textDark} />
+              <Map size={20} color={Colors.textDark} />
             </View>
             <Text style={styles.actionButtonText}>Map</Text>
           </Pressable>
@@ -333,11 +331,7 @@ export default function EventDetails() {
             ]}
           >
             <View style={styles.actionButtonIcon}>
-              <Ionicons
-                name="share-outline"
-                size={20}
-                color={Colors.textDark}
-              />
+              <Share size={20} color={Colors.textDark} />
             </View>
             <Text style={styles.actionButtonText}>Share</Text>
           </Pressable>
@@ -353,11 +347,7 @@ export default function EventDetails() {
             ]}
           >
             <View style={styles.actionButtonIcon}>
-              <Ionicons
-                name="cloud-download-outline"
-                size={20}
-                color={Colors.textDark}
-              />
+              <CloudDownload size={20} color={Colors.textDark} />
             </View>
             <Text style={styles.actionButtonText}>Offline</Text>
           </Pressable>
@@ -368,38 +358,25 @@ export default function EventDetails() {
           <View style={styles.locationCard}>
             <View style={styles.locationHeader}>
               <View style={styles.locationIconContainer}>
-                <Ionicons
-                  name="location-outline"
-                  size={18}
-                  color={Colors.textMedium}
-                />
+                <MapPin size={18} color={Colors.textMedium} />
               </View>
               <Text style={styles.locationTitle}>Location & Directions</Text>
             </View>
 
             <View style={styles.locationContent}>
               <View style={styles.venueRow}>
-                <Ionicons
-                  name="business-outline"
-                  size={16}
-                  color={Colors.textMedium}
-                />
+                <Building size={16} color={Colors.textMedium} />
                 <Text style={styles.venueName}>{event.place}</Text>
               </View>
 
               <View style={styles.distanceRow}>
-                <Ionicons
-                  name="navigate-outline"
-                  size={16}
-                  color={Colors.textMedium}
-                />
+                <Navigation size={16} color={Colors.textMedium} />
                 <Text style={styles.distanceText}>
                   {distanceKm !== null
                     ? `${distanceKm}km away`
                     : "Distance calculating..."}
                 </Text>
-                <Ionicons
-                  name="time-outline"
+                <Clock
                   size={16}
                   color={Colors.textMedium}
                   style={{ marginLeft: 12 }}
@@ -422,11 +399,7 @@ export default function EventDetails() {
                     },
                   ]}
                 >
-                  <Ionicons
-                    name="navigate-circle-outline"
-                    size={16}
-                    color="white"
-                  />
+                  <Navigation size={16} color="white" />
                   <Text style={styles.directionsButtonText}>Directions</Text>
                 </Pressable>
                 <Pressable
@@ -439,11 +412,7 @@ export default function EventDetails() {
                     },
                   ]}
                 >
-                  <Ionicons
-                    name="map-outline"
-                    size={16}
-                    color={Colors.textDark}
-                  />
+                  <Map size={16} color={Colors.textDark} />
                   <Text style={styles.viewMapButtonText}>View Map</Text>
                 </Pressable>
               </View>
@@ -616,6 +585,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     color: Colors.textDark,
+    textAlign: "center",
   },
   actionButtonTextActive: {
     color: Colors.primaryOchre,

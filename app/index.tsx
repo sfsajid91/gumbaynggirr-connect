@@ -1,7 +1,15 @@
-import { Ionicons } from "@expo/vector-icons";
 import NetInfo from "@react-native-community/netinfo";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
+import {
+  Calendar,
+  MapPin,
+  Mic,
+  Signal,
+  Users,
+  Wifi,
+  WifiOff,
+} from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Colors } from "../constants/colors";
@@ -124,11 +132,7 @@ export default function App() {
             { flexDirection: "row", alignItems: "flex-start", gap: 12 },
           ]}
         >
-          <Ionicons
-            name="location-outline"
-            size={24}
-            color={Colors.riverBlue}
-          />
+          <MapPin size={24} color={Colors.riverBlue} />
           <View style={{ flex: 1 }}>
             <Text
               style={{
@@ -152,7 +156,7 @@ export default function App() {
             { flexDirection: "row", alignItems: "flex-start", gap: 12 },
           ]}
         >
-          <Ionicons name="mic-outline" size={24} color={Colors.sunsetRed} />
+          <Mic size={24} color={Colors.sunsetRed} />
           <View style={{ flex: 1 }}>
             <Text
               style={{
@@ -176,11 +180,7 @@ export default function App() {
             { flexDirection: "row", alignItems: "flex-start", gap: 12 },
           ]}
         >
-          <Ionicons
-            name="people-outline"
-            size={24}
-            color={Colors.primaryOchre}
-          />
+          <Users size={24} color={Colors.primaryOchre} />
           <View style={{ flex: 1 }}>
             <Text
               style={{
@@ -204,7 +204,7 @@ export default function App() {
             { flexDirection: "row", alignItems: "flex-start", gap: 12 },
           ]}
         >
-          <Ionicons name="wifi-outline" size={24} color={Colors.successGreen} />
+          <Wifi size={24} color={Colors.successGreen} />
           <View style={{ flex: 1 }}>
             <Text
               style={{
@@ -244,11 +244,7 @@ export default function App() {
             marginBottom: 16,
           }}
         >
-          <Ionicons
-            name="calendar-outline"
-            size={20}
-            color={Colors.sunsetRed}
-          />
+          <Calendar size={20} color={Colors.sunsetRed} />
           <View style={{ flex: 1 }}>
             <Text
               style={{
@@ -314,11 +310,11 @@ export default function App() {
           }}
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <Ionicons
-              name={isOnline ? "cellular-outline" : "cloud-offline-outline"}
-              size={16}
-              color={isOnline ? Colors.successGreen : Colors.warningAmber}
-            />
+            {isOnline ? (
+              <Signal size={16} color={Colors.successGreen} />
+            ) : (
+              <WifiOff size={16} color={Colors.warningAmber} />
+            )}
             <Text style={{ fontSize: 14, color: Colors.textMedium }}>
               {isOnline ? "Online" : "Offline"}
             </Text>

@@ -1,5 +1,12 @@
-import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
+import {
+  ArrowDown,
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Hand,
+} from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Platform,
@@ -339,11 +346,7 @@ export default function CalendarScreen() {
               accessibilityLabel="Previous month"
               accessibilityHint="Navigate to previous month"
             >
-              <Ionicons
-                name="chevron-back-outline"
-                size={20}
-                color={Colors.textDark}
-              />
+              <ChevronLeft size={20} color={Colors.textDark} />
             </Pressable>
 
             <View style={{ alignItems: "center" }}>
@@ -389,7 +392,7 @@ export default function CalendarScreen() {
                   accessibilityLabel="Go to today"
                   accessibilityHint="Navigate to current month and today's date"
                 >
-                  <Ionicons name="today-outline" size={14} color="white" />
+                  <CalendarIcon size={14} color="white" />
                   <Text
                     style={{
                       color: "white",
@@ -416,11 +419,7 @@ export default function CalendarScreen() {
               accessibilityLabel="Next month"
               accessibilityHint="Navigate to next month"
             >
-              <Ionicons
-                name="chevron-forward-outline"
-                size={20}
-                color={Colors.textDark}
-              />
+              <ChevronRight size={20} color={Colors.textDark} />
             </Pressable>
           </View>
 
@@ -436,11 +435,7 @@ export default function CalendarScreen() {
               padding: 8,
             }}
           >
-            <Ionicons
-              name="hand-left-outline"
-              size={14}
-              color={Colors.textMedium}
-            />
+            <Hand size={14} color={Colors.textMedium} />
             <Text
               style={{
                 color: Colors.textMedium,
@@ -662,11 +657,7 @@ export default function CalendarScreen() {
                               alignItems: "center",
                             }}
                           >
-                            <Ionicons
-                              name="time-outline"
-                              size={14}
-                              color={Colors.textMedium}
-                            />
+                            <Clock size={14} color={Colors.textMedium} />
                             <Text
                               style={{
                                 color: Colors.textMedium,
@@ -678,11 +669,7 @@ export default function CalendarScreen() {
                             </Text>
                           </View>
                         </View>
-                        <Ionicons
-                          name="chevron-forward-outline"
-                          size={16}
-                          color={Colors.textMedium}
-                        />
+                        <ChevronRight size={16} color={Colors.textMedium} />
                       </View>
                     </Pressable>
                   ))
@@ -700,11 +687,7 @@ export default function CalendarScreen() {
               gap: 4,
             }}
           >
-            <Ionicons
-              name="arrow-down-outline"
-              size={14}
-              color={Colors.textMedium}
-            />
+            <ArrowDown size={14} color={Colors.textMedium} />
             <Text
               style={{
                 color: Colors.textMedium,

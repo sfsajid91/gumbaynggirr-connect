@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import {
   AudioModule,
   RecordingPresets,
@@ -8,6 +7,7 @@ import {
   useAudioRecorder,
   useAudioRecorderState,
 } from "expo-audio";
+import { Mic, Pause, Play, Square, Trash2 } from "lucide-react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Colors } from "../constants/colors";
@@ -267,7 +267,7 @@ export default function VoiceRecorder({ eventId }: VoiceRecorderProps) {
             onPress={deleteRecording}
             style={styles.deleteButton}
           >
-            <Ionicons name="trash-outline" size={20} color={Colors.errorClay} />
+            <Trash2 size={20} color={Colors.errorClay} />
           </TouchableOpacity>
         )}
       </View>
@@ -287,11 +287,11 @@ export default function VoiceRecorder({ eventId }: VoiceRecorderProps) {
               ]}
               disabled={!hasPermission}
             >
-              <Ionicons
-                name={isRecording ? "stop" : "mic"}
-                size={24}
-                color="white"
-              />
+              {isRecording ? (
+                <Square size={24} color="white" />
+              ) : (
+                <Mic size={24} color="white" />
+              )}
               <Text style={styles.buttonText}>
                 {isRecording ? "Stop" : "Record"}
               </Text>
@@ -329,11 +329,11 @@ export default function VoiceRecorder({ eventId }: VoiceRecorderProps) {
               ]}
               disabled={!playerState.isLoaded}
             >
-              <Ionicons
-                name={isPlaying ? "pause" : "play"}
-                size={24}
-                color="white"
-              />
+              {isPlaying ? (
+                <Pause size={24} color="white" />
+              ) : (
+                <Play size={24} color="white" />
+              )}
             </TouchableOpacity>
 
             <View style={styles.durationContainer}>
