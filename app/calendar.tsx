@@ -14,10 +14,11 @@ import {
 } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
+  Easing,
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
+  withDecay,
   withTiming,
 } from "react-native-reanimated";
 import { Skeleton } from "../components/Skeleton";
@@ -112,9 +113,9 @@ export default function CalendarScreen() {
     } else {
       // Show today button when not on current month
       todayButtonOpacity.value = withTiming(1, { duration: 300 });
-      todayButtonScale.value = withSpring(1, {
-        damping: 15,
-        stiffness: 300,
+      todayButtonScale.value = withTiming(1, {
+        duration: 300,
+        easing: Easing.out(Easing.back(1.2)),
       });
     }
   };
@@ -129,14 +130,17 @@ export default function CalendarScreen() {
     todayButtonScale.value = withTiming(0.8, { duration: 200 });
 
     // Show feedback animation
-    todayButtonScale.value = withSpring(
+    todayButtonScale.value = withTiming(
       1.1,
       {
-        damping: 10,
-        stiffness: 400,
+        duration: 150,
+        easing: Easing.out(Easing.quad),
       },
       () => {
-        todayButtonScale.value = withSpring(0.8, { duration: 200 });
+        todayButtonScale.value = withTiming(0.8, {
+          duration: 200,
+          easing: Easing.out(Easing.quad),
+        });
       }
     );
   };
@@ -162,9 +166,37 @@ export default function CalendarScreen() {
         } else {
           runOnJS(navigateMonth)("next");
         }
+        // Smooth return to center after navigation
+        translateX.value = withTiming(0, {
+          duration: 300,
+          easing: Easing.out(Easing.cubic),
+        });
+      } else {
+        // If swipe wasn't strong enough, smoothly return to center
+        // Use withDecay for natural deceleration based on velocity
+        if (Math.abs(velocityX) > 100) {
+          translateX.value = withDecay(
+            {
+              velocity: velocityX,
+              clamp: [-100, 100], // Limit the decay range
+              deceleration: 0.998, // Slightly faster deceleration
+            },
+            () => {
+              // After decay, smoothly return to center
+              translateX.value = withTiming(0, {
+                duration: 200,
+                easing: Easing.out(Easing.quad),
+              });
+            }
+          );
+        } else {
+          // For low velocity, just smoothly return to center
+          translateX.value = withTiming(0, {
+            duration: 250,
+            easing: Easing.out(Easing.quad),
+          });
+        }
       }
-
-      translateX.value = withSpring(0);
     });
 
   // Animated style for the calendar grid
