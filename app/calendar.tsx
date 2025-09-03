@@ -16,6 +16,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withTiming,
 } from "react-native-reanimated";
 import { Skeleton } from "../components/Skeleton";
 import { Colors } from "../constants/colors";
@@ -37,6 +38,8 @@ export default function CalendarScreen() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const { events, loading, refreshing, refresh } = useEvents();
   const translateX = useSharedValue(0);
+  const todayButtonOpacity = useSharedValue(0);
+  const todayButtonScale = useSharedValue(0.8);
 
   // Set today as default selected date
   useEffect(() => {
@@ -85,7 +88,40 @@ export default function CalendarScreen() {
 
   // Handle month navigation
   const navigateMonth = (direction: "prev" | "next") => {
-    setMonthOffset((prev) => (direction === "prev" ? prev - 1 : prev + 1));
+    const newOffset = direction === "prev" ? monthOffset - 1 : monthOffset + 1;
+    setMonthOffset(newOffset);
+    
+    // Show/hide today button based on whether we're viewing current month
+    if (newOffset === 0) {
+      // Hide today button when back to current month
+      todayButtonOpacity.value = withTiming(0, { duration: 200 });
+      todayButtonScale.value = withTiming(0.8, { duration: 200 });
+    } else {
+      // Show today button when not on current month
+      todayButtonOpacity.value = withTiming(1, { duration: 300 });
+      todayButtonScale.value = withSpring(1, {
+        damping: 15,
+        stiffness: 300,
+      });
+    }
+  };
+  
+  // Navigate back to current month
+  const goToToday = () => {
+    setMonthOffset(0);
+    setSelectedDate(new Date());
+    
+    // Hide today button
+    todayButtonOpacity.value = withTiming(0, { duration: 200 });
+    todayButtonScale.value = withTiming(0.8, { duration: 200 });
+    
+    // Show feedback animation
+    todayButtonScale.value = withSpring(1.1, {
+      damping: 10,
+      stiffness: 400,
+    }, () => {
+      todayButtonScale.value = withSpring(0.8, { duration: 200 });
+    });
   };
 
   // Handle date selection
@@ -118,6 +154,14 @@ export default function CalendarScreen() {
   const animatedStyle = useAnimatedStyle(() => {
     return {
       transform: [{ translateX: translateX.value }],
+    };
+  });
+  
+  // Animated style for today button
+  const todayButtonStyle = useAnimatedStyle(() => {
+    return {
+      opacity: todayButtonOpacity.value,
+      transform: [{ scale: todayButtonScale.value }],
     };
   });
 
@@ -177,6 +221,7 @@ export default function CalendarScreen() {
               justifyContent: "space-between",
               marginBottom: 20,
               paddingVertical: 8,
+              position: "relative",
             }}
           >
             <Pressable
@@ -193,15 +238,63 @@ export default function CalendarScreen() {
                 color={Colors.textDark}
               />
             </Pressable>
-            <Text
-              style={{
-                color: Colors.textDark,
-                fontWeight: "700",
-                fontSize: 20,
-              }}
-            >
-              {month} {year}
-            </Text>
+            
+            <View style={{ alignItems: "center" }}>
+              <Text
+                style={{
+                  color: Colors.textDark,
+                  fontWeight: "700",
+                  fontSize: 20,
+                }}
+              >
+                {month} {year}
+              </Text>
+              
+              {/* Today Button - appears when not on current month */}
+              <Animated.View
+                style={[
+                  {
+                    position: "absolute",
+                    top: 28,
+                    backgroundColor: Colors.primaryOchre,
+                    borderRadius: 16,
+                    paddingHorizontal: 12,
+                    paddingVertical: 4,
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 4,
+                    elevation: 4,
+                  },
+                  todayButtonStyle,
+                ]}
+              >
+                <Pressable
+                  onPress={goToToday}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 4,
+                  }}
+                >
+                  <Ionicons
+                    name="today-outline"
+                    size={14}
+                    color="white"
+                  />
+                  <Text
+                    style={{
+                      color: "white",
+                      fontSize: 12,
+                      fontWeight: "600",
+                    }}
+                  >
+                    Today
+                  </Text>
+                </Pressable>
+              </Animated.View>
+            </View>
+            
             <Pressable
               onPress={() => navigateMonth("next")}
               style={{
