@@ -161,7 +161,16 @@ export default function EventDetails() {
           headerStyle: { backgroundColor: Colors.deepEarth },
           headerTintColor: "white",
           headerRight: () => (
-            <Pressable onPress={() => {}} style={styles.shareButton}>
+            <Pressable
+              onPress={() => {}}
+              style={({ pressed }) => [
+                styles.shareButton,
+                {
+                  opacity: pressed ? 0.85 : 1,
+                  transform: [{ scale: pressed ? 0.95 : 1 }],
+                },
+              ]}
+            >
               <Ionicons name="share-outline" size={24} color="white" />
             </Pressable>
           ),
@@ -236,9 +245,13 @@ export default function EventDetails() {
             <Text style={styles.recordingTitle}>Voice Notes</Text>
             <Pressable
               onPress={() => setIsRecording(!isRecording)}
-              style={[
+              style={({ pressed }) => [
                 styles.recordButton,
                 isRecording && styles.recordButtonActive,
+                {
+                  opacity: pressed ? 0.85 : 1,
+                  transform: [{ scale: pressed ? 0.95 : 1 }],
+                },
               ]}
             >
               <Ionicons
@@ -265,7 +278,14 @@ export default function EventDetails() {
         <View style={styles.actionButtons}>
           <Pressable
             onPress={handleSaveToCalendar}
-            style={[styles.actionButton, isSaved && styles.actionButtonActive]}
+            style={({ pressed }) => [
+              styles.actionButton,
+              isSaved && styles.actionButtonActive,
+              {
+                opacity: pressed ? 0.85 : 1,
+                transform: [{ scale: pressed ? 0.95 : 1 }],
+              },
+            ]}
           >
             <View style={styles.actionButtonIcon}>
               <Ionicons
@@ -284,14 +304,32 @@ export default function EventDetails() {
             </Text>
           </Pressable>
 
-          <Pressable onPress={handleViewMap} style={styles.actionButton}>
+          <Pressable
+            onPress={handleViewMap}
+            style={({ pressed }) => [
+              styles.actionButton,
+              {
+                opacity: pressed ? 0.85 : 1,
+                transform: [{ scale: pressed ? 0.95 : 1 }],
+              },
+            ]}
+          >
             <View style={styles.actionButtonIcon}>
               <Ionicons name="map-outline" size={20} color={Colors.textDark} />
             </View>
             <Text style={styles.actionButtonText}>Map</Text>
           </Pressable>
 
-          <Pressable onPress={handleShareEvent} style={styles.actionButton}>
+          <Pressable
+            onPress={handleShareEvent}
+            style={({ pressed }) => [
+              styles.actionButton,
+              {
+                opacity: pressed ? 0.85 : 1,
+                transform: [{ scale: pressed ? 0.95 : 1 }],
+              },
+            ]}
+          >
             <View style={styles.actionButtonIcon}>
               <Ionicons
                 name="share-outline"
@@ -302,7 +340,16 @@ export default function EventDetails() {
             <Text style={styles.actionButtonText}>Share</Text>
           </Pressable>
 
-          <Pressable onPress={handleOfflineMode} style={styles.actionButton}>
+          <Pressable
+            onPress={handleOfflineMode}
+            style={({ pressed }) => [
+              styles.actionButton,
+              {
+                opacity: pressed ? 0.85 : 1,
+                transform: [{ scale: pressed ? 0.95 : 1 }],
+              },
+            ]}
+          >
             <View style={styles.actionButtonIcon}>
               <Ionicons
                 name="cloud-download-outline"
@@ -365,7 +412,13 @@ export default function EventDetails() {
               <View style={styles.locationButtonsRow}>
                 <Pressable
                   onPress={handleGetDirections}
-                  style={styles.directionsButton}
+                  style={({ pressed }) => [
+                    styles.directionsButton,
+                    {
+                      opacity: pressed ? 0.85 : 1,
+                      transform: [{ scale: pressed ? 0.95 : 1 }],
+                    },
+                  ]}
                 >
                   <Ionicons
                     name="navigate-circle-outline"
@@ -374,7 +427,16 @@ export default function EventDetails() {
                   />
                   <Text style={styles.directionsButtonText}>Directions</Text>
                 </Pressable>
-                <Pressable onPress={handleViewMap} style={styles.viewMapButton}>
+                <Pressable
+                  onPress={handleViewMap}
+                  style={({ pressed }) => [
+                    styles.viewMapButton,
+                    {
+                      opacity: pressed ? 0.85 : 1,
+                      transform: [{ scale: pressed ? 0.95 : 1 }],
+                    },
+                  ]}
+                >
                   <Ionicons
                     name="map-outline"
                     size={16}

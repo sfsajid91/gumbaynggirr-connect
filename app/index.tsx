@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import NetInfo from "@react-native-community/netinfo";
-import { Link } from "expo-router";
+import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
@@ -24,6 +24,7 @@ const styles = StyleSheet.create({
 export default function App() {
   const [isOnline, setIsOnline] = useState(true);
   const [lastSync, setLastSync] = useState<string>("—");
+  const router = useRouter();
 
   // Check network status and last sync on mount
   useEffect(() => {
@@ -263,20 +264,25 @@ export default function App() {
             </Text>
           </View>
         </View>
-        <Link href="/calendar" asChild>
-          <Pressable
-            style={{
+        <Pressable
+          style={({ pressed }) => [
+            {
               backgroundColor: Colors.primaryOchre,
               borderRadius: 12,
               paddingVertical: 14,
               alignItems: "center",
-            }}
-          >
-            <Text style={{ color: "white", fontWeight: "700", fontSize: 16 }}>
-              Open Calendar
-            </Text>
-          </Pressable>
-        </Link>
+              opacity: pressed ? 0.85 : 1,
+              transform: [{ scale: pressed ? 0.98 : 1 }],
+            },
+          ]}
+          onPress={() => {
+            router.push("/calendar");
+          }}
+        >
+          <Text style={{ color: "white", fontWeight: "700", fontSize: 16 }}>
+            Open Calendar
+          </Text>
+        </Pressable>
       </View>
 
       {/* Cultural Motif */}

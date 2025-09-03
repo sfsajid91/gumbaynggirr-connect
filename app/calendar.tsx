@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter, Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Platform,
@@ -238,7 +238,6 @@ export default function CalendarScreen() {
     router.push(`/event/${event.id}`);
   };
 
-
   // Show toast notification
   const showToast = (message: string) => {
     if (Platform.OS === "android") {
@@ -292,11 +291,13 @@ export default function CalendarScreen() {
           >
             <Pressable
               onPress={() => navigateMonth("prev")}
-              style={{
+              style={({ pressed }) => ({
                 padding: 12,
                 minWidth: 44,
                 alignItems: "center",
-              }}
+                opacity: pressed ? 0.85 : 1,
+                transform: [{ scale: pressed ? 0.9 : 1 }],
+              })}
               accessibilityRole="button"
               accessibilityLabel="Previous month"
               accessibilityHint="Navigate to previous month"
@@ -340,11 +341,13 @@ export default function CalendarScreen() {
               >
                 <Pressable
                   onPress={goToToday}
-                  style={{
+                  style={({ pressed }) => ({
                     flexDirection: "row",
                     alignItems: "center",
                     gap: 4,
-                  }}
+                    opacity: pressed ? 0.85 : 1,
+                    transform: [{ scale: pressed ? 0.9 : 1 }],
+                  })}
                   accessibilityRole="button"
                   accessibilityLabel="Go to today"
                   accessibilityHint="Navigate to current month and today's date"
@@ -365,11 +368,13 @@ export default function CalendarScreen() {
 
             <Pressable
               onPress={() => navigateMonth("next")}
-              style={{
+              style={({ pressed }) => ({
                 padding: 12,
                 minWidth: 44,
                 alignItems: "center",
-              }}
+                opacity: pressed ? 0.85 : 1,
+                transform: [{ scale: pressed ? 0.9 : 1 }],
+              })}
               accessibilityRole="button"
               accessibilityLabel="Next month"
               accessibilityHint="Navigate to next month"
@@ -677,7 +682,6 @@ export default function CalendarScreen() {
           </View>
         </View>
       </ScrollView>
-
     </View>
   );
 }
