@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
+// import { useRouter } from "expo-router"; // Reserved for future navigation
 import { Stack } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  Modal,
   Platform,
   Pressable,
   RefreshControl,
@@ -36,7 +38,10 @@ const days = [
 export default function CalendarScreen() {
   const [monthOffset, setMonthOffset] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
+  const [showEventModal, setShowEventModal] = useState(false);
   const { events, loading, refreshing, refresh } = useEvents();
+  // const router = useRouter(); // Reserved for future navigation features
   const translateX = useSharedValue(0);
   const todayButtonOpacity = useSharedValue(0);
   const todayButtonScale = useSharedValue(0.8);
@@ -64,20 +69,28 @@ export default function CalendarScreen() {
     .concat(Array.from({ length: daysInMonth }, (_, i) => i + 1));
 
   // Get events for a specific date
-  const getEventsForDate = (date: Date): EventItem[] => {
-    const dateStr = date.toISOString().slice(0, 10);
-    return events.filter((event) => event.date === dateStr);
-  };
+  const getEventsForDate = useCallback(
+    (date: Date): EventItem[] => {
+      const dateStr = date.toISOString().slice(0, 10);
+      return events.filter((event) => event.date === dateStr);
+    },
+    [events]
+  );
 
-  // Get today's events
-  const todaysEvents = useMemo(() => {
-    return getEventsForDate(new Date());
-  }, [events]);
+  const selectedDateString = useMemo(() => {
+    return selectedDate.toISOString().slice(0, 10);
+  }, [selectedDate]);
+
+  // Get today's events (reserved for future features)
+  // const todayEvents = useMemo(() => {
+  //   const todayDateString = new Date().toISOString().slice(0, 10);
+  //   return getEventsForDate(new Date(todayDateString));
+  // }, [getEventsForDate]);
 
   // Get events for selected date
   const selectedDateEvents = useMemo(() => {
-    return getEventsForDate(selectedDate);
-  }, [events, selectedDate]);
+    return getEventsForDate(new Date(selectedDateString));
+  }, [selectedDateString, getEventsForDate]);
 
   // Check if a date has events
   const hasEvents = (day: number): boolean => {
@@ -90,7 +103,7 @@ export default function CalendarScreen() {
   const navigateMonth = (direction: "prev" | "next") => {
     const newOffset = direction === "prev" ? monthOffset - 1 : monthOffset + 1;
     setMonthOffset(newOffset);
-    
+
     // Show/hide today button based on whether we're viewing current month
     if (newOffset === 0) {
       // Hide today button when back to current month
@@ -105,23 +118,27 @@ export default function CalendarScreen() {
       });
     }
   };
-  
+
   // Navigate back to current month
   const goToToday = () => {
     setMonthOffset(0);
     setSelectedDate(new Date());
-    
+
     // Hide today button
     todayButtonOpacity.value = withTiming(0, { duration: 200 });
     todayButtonScale.value = withTiming(0.8, { duration: 200 });
-    
+
     // Show feedback animation
-    todayButtonScale.value = withSpring(1.1, {
-      damping: 10,
-      stiffness: 400,
-    }, () => {
-      todayButtonScale.value = withSpring(0.8, { duration: 200 });
-    });
+    todayButtonScale.value = withSpring(
+      1.1,
+      {
+        damping: 10,
+        stiffness: 400,
+      },
+      () => {
+        todayButtonScale.value = withSpring(0.8, { duration: 200 });
+      }
+    );
   };
 
   // Handle date selection
@@ -156,7 +173,7 @@ export default function CalendarScreen() {
       transform: [{ translateX: translateX.value }],
     };
   });
-  
+
   // Animated style for today button
   const todayButtonStyle = useAnimatedStyle(() => {
     return {
@@ -171,6 +188,33 @@ export default function CalendarScreen() {
     const month = date.toLocaleDateString(undefined, { month: "short" });
     const day = date.getDate();
     return `${weekday}, ${month} ${day}`;
+  };
+
+  // Format time from ISO datetime string
+  const formatTime = (isoString: string) => {
+    const date = new Date(isoString);
+    return date.toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  // Format time range
+  const formatTimeRange = (startTime: string, endTime: string) => {
+    return `${formatTime(startTime)} - ${formatTime(endTime)}`;
+  };
+
+  // Handle event press
+  const handleEventPress = (event: EventItem) => {
+    setSelectedEvent(event);
+    setShowEventModal(true);
+  };
+
+  // Close event modal
+  const closeEventModal = () => {
+    setShowEventModal(false);
+    setTimeout(() => setSelectedEvent(null), 300);
   };
 
   // Show toast notification
@@ -231,6 +275,9 @@ export default function CalendarScreen() {
                 minWidth: 44,
                 alignItems: "center",
               }}
+              accessibilityRole="button"
+              accessibilityLabel="Previous month"
+              accessibilityHint="Navigate to previous month"
             >
               <Ionicons
                 name="chevron-back-outline"
@@ -238,7 +285,7 @@ export default function CalendarScreen() {
                 color={Colors.textDark}
               />
             </Pressable>
-            
+
             <View style={{ alignItems: "center" }}>
               <Text
                 style={{
@@ -249,7 +296,7 @@ export default function CalendarScreen() {
               >
                 {month} {year}
               </Text>
-              
+
               {/* Today Button - appears when not on current month */}
               <Animated.View
                 style={[
@@ -276,12 +323,11 @@ export default function CalendarScreen() {
                     alignItems: "center",
                     gap: 4,
                   }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Go to today"
+                  accessibilityHint="Navigate to current month and today's date"
                 >
-                  <Ionicons
-                    name="today-outline"
-                    size={14}
-                    color="white"
-                  />
+                  <Ionicons name="today-outline" size={14} color="white" />
                   <Text
                     style={{
                       color: "white",
@@ -294,7 +340,7 @@ export default function CalendarScreen() {
                 </Pressable>
               </Animated.View>
             </View>
-            
+
             <Pressable
               onPress={() => navigateMonth("next")}
               style={{
@@ -302,6 +348,9 @@ export default function CalendarScreen() {
                 minWidth: 44,
                 alignItems: "center",
               }}
+              accessibilityRole="button"
+              accessibilityLabel="Next month"
+              accessibilityHint="Navigate to next month"
             >
               <Ionicons
                 name="chevron-forward-outline"
@@ -476,10 +525,7 @@ export default function CalendarScreen() {
               <Skeleton height={64} />
             ) : (
               <>
-                {(selectedDate.toDateString() === new Date().toDateString()
-                  ? todaysEvents
-                  : selectedDateEvents
-                ).length === 0 ? (
+                {selectedDateEvents.length === 0 ? (
                   <Text
                     style={{
                       color: Colors.textMedium,
@@ -491,23 +537,24 @@ export default function CalendarScreen() {
                     No events for this day.
                   </Text>
                 ) : (
-                  (selectedDate.toDateString() === new Date().toDateString()
-                    ? todaysEvents
-                    : selectedDateEvents
-                  ).map((ev) => (
-                    <View
+                  selectedDateEvents.map((ev: EventItem) => (
+                    <Pressable
                       key={ev.id}
-                      style={{
-                        backgroundColor: "white",
-                        borderRadius: 12,
-                        padding: 16,
-                        marginBottom: 12,
-                        shadowColor: "#000",
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: 0.1,
-                        shadowRadius: 4,
-                        elevation: 3,
-                      }}
+                      onPress={() => handleEventPress(ev)}
+                      style={({ pressed }) => [
+                        {
+                          backgroundColor: "white",
+                          borderRadius: 12,
+                          padding: 16,
+                          marginBottom: 12,
+                          shadowColor: "#000",
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: 0.1,
+                          shadowRadius: 4,
+                          elevation: 3,
+                          transform: [{ scale: pressed ? 0.98 : 1 }],
+                        },
+                      ]}
                     >
                       <View
                         style={{
@@ -563,7 +610,7 @@ export default function CalendarScreen() {
                                 marginLeft: 4,
                               }}
                             >
-                              {ev.time}
+                              {formatTimeRange(ev.startTime, ev.endTime)}
                             </Text>
                           </View>
                         </View>
@@ -573,7 +620,7 @@ export default function CalendarScreen() {
                           color={Colors.textMedium}
                         />
                       </View>
-                    </View>
+                    </Pressable>
                   ))
                 )}
               </>
@@ -608,6 +655,344 @@ export default function CalendarScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Event Detail Modal */}
+      <Modal
+        visible={showEventModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={closeEventModal}
+      >
+        {selectedEvent && (
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: Colors.warmWhite,
+            }}
+          >
+            {/* Modal Header */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                paddingHorizontal: 20,
+                paddingTop: 60,
+                paddingBottom: 20,
+                backgroundColor: Colors.primaryOchre,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: "700",
+                  color: Colors.deepEarth,
+                  flex: 1,
+                }}
+              >
+                Event Details
+              </Text>
+              <Pressable
+                onPress={closeEventModal}
+                style={{
+                  padding: 8,
+                  borderRadius: 20,
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Close event details"
+                accessibilityHint="Close the event details modal"
+              >
+                <Ionicons name="close" size={24} color={Colors.deepEarth} />
+              </Pressable>
+            </View>
+
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={{ padding: 20 }}
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Event Title */}
+              <Text
+                style={{
+                  fontSize: 28,
+                  fontWeight: "800",
+                  color: Colors.textDark,
+                  marginBottom: 8,
+                  lineHeight: 34,
+                }}
+              >
+                {selectedEvent.title}
+              </Text>
+
+              {/* Host */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginBottom: 16,
+                }}
+              >
+                <Ionicons
+                  name="person-outline"
+                  size={18}
+                  color={Colors.primaryOchre}
+                />
+                <Text
+                  style={{
+                    fontSize: 16,
+                    color: Colors.textMedium,
+                    marginLeft: 8,
+                    fontWeight: "600",
+                  }}
+                >
+                  Hosted by {selectedEvent.host}
+                </Text>
+              </View>
+
+              {/* Date & Time Card */}
+              <View
+                style={{
+                  backgroundColor: "white",
+                  borderRadius: 16,
+                  padding: 20,
+                  marginBottom: 16,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 4,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 12,
+                  }}
+                >
+                  <Ionicons
+                    name="calendar-outline"
+                    size={20}
+                    color={Colors.primaryOchre}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: "600",
+                      color: Colors.textDark,
+                      marginLeft: 10,
+                    }}
+                  >
+                    {formatDisplayDate(new Date(selectedEvent.date))}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  <Ionicons
+                    name="time-outline"
+                    size={20}
+                    color={Colors.primaryOchre}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      color: Colors.textMedium,
+                      marginLeft: 10,
+                    }}
+                  >
+                    {formatTimeRange(
+                      selectedEvent.startTime,
+                      selectedEvent.endTime
+                    )}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Location Card */}
+              <View
+                style={{
+                  backgroundColor: "white",
+                  borderRadius: 16,
+                  padding: 20,
+                  marginBottom: 16,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 4,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "flex-start",
+                    marginBottom: 8,
+                  }}
+                >
+                  <Ionicons
+                    name="location-outline"
+                    size={20}
+                    color={Colors.primaryOchre}
+                    style={{ marginTop: 2 }}
+                  />
+                  <View style={{ flex: 1, marginLeft: 10 }}>
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        fontWeight: "600",
+                        color: Colors.textDark,
+                        marginBottom: 4,
+                      }}
+                    >
+                      {selectedEvent.place}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        color: Colors.textMedium,
+                        lineHeight: 20,
+                      }}
+                    >
+                      {selectedEvent.address}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* About Section */}
+              <View
+                style={{
+                  backgroundColor: "white",
+                  borderRadius: 16,
+                  padding: 20,
+                  marginBottom: 16,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 4,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 18,
+                    fontWeight: "700",
+                    color: Colors.textDark,
+                    marginBottom: 12,
+                  }}
+                >
+                  About This Event
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    color: Colors.textMedium,
+                    lineHeight: 24,
+                  }}
+                >
+                  {selectedEvent.about}
+                </Text>
+              </View>
+
+              {/* What to Bring */}
+              <View
+                style={{
+                  backgroundColor: "white",
+                  borderRadius: 16,
+                  padding: 20,
+                  marginBottom: 16,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 4,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 12,
+                  }}
+                >
+                  <Ionicons
+                    name="bag-outline"
+                    size={20}
+                    color={Colors.primaryOchre}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: "700",
+                      color: Colors.textDark,
+                      marginLeft: 10,
+                    }}
+                  >
+                    What to Bring
+                  </Text>
+                </View>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    color: Colors.textMedium,
+                    lineHeight: 24,
+                  }}
+                >
+                  {selectedEvent.bring}
+                </Text>
+              </View>
+
+              {/* Cultural Context */}
+              <View
+                style={{
+                  backgroundColor: Colors.primaryOchre,
+                  borderRadius: 16,
+                  padding: 20,
+                  marginBottom: 32,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 12,
+                  }}
+                >
+                  <Ionicons
+                    name="heart-outline"
+                    size={20}
+                    color={Colors.deepEarth}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: "700",
+                      color: Colors.deepEarth,
+                      marginLeft: 10,
+                    }}
+                  >
+                    Cultural Context
+                  </Text>
+                </View>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    color: Colors.deepEarth,
+                    lineHeight: 24,
+                  }}
+                >
+                  {selectedEvent.culture}
+                </Text>
+              </View>
+            </ScrollView>
+          </View>
+        )}
+      </Modal>
     </View>
   );
 }

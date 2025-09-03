@@ -11,9 +11,9 @@ export async function getDb(): Promise<SQLite.SQLiteDatabase> {
     "SELECT name FROM sqlite_master WHERE type='table' AND name='events'"
   );
   if (tables.length > 0) {
-    // Check if the old schema exists (has 'start' column)
+    // Check if the old schema exists (has 'time' column instead of 'startTime' and 'endTime')
     const columns = await database.getAllAsync("PRAGMA table_info(events)");
-    const hasOldSchema = columns.some((col: any) => col.name === "start");
+    const hasOldSchema = columns.some((col: any) => col.name === "time");
 
     if (hasOldSchema) {
       // Drop the old table and recreate with new schema
@@ -26,7 +26,8 @@ export async function getDb(): Promise<SQLite.SQLiteDatabase> {
       id TEXT PRIMARY KEY NOT NULL,
       title TEXT NOT NULL,
       date TEXT NOT NULL,
-      time TEXT NOT NULL,
+      startTime TEXT NOT NULL,
+      endTime TEXT NOT NULL,
       place TEXT NOT NULL,
       host TEXT NOT NULL,
       address TEXT NOT NULL,

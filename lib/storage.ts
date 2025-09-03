@@ -3,8 +3,8 @@ import { getDb } from "./db";
 
 export async function saveEvents(events: EventItem[]) {
   const db = await getDb();
-  const insert = `INSERT OR REPLACE INTO events (id, title, date, time, place, host, address, lat, lon, about, bring, culture)
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  const insert = `INSERT OR REPLACE INTO events (id, title, date, startTime, endTime, place, host, address, lat, lon, about, bring, culture)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   await db.withTransactionAsync(async () => {
     for (const e of events) {
       await db.runAsync(
@@ -12,7 +12,8 @@ export async function saveEvents(events: EventItem[]) {
         e.id,
         e.title,
         e.date,
-        e.time,
+        e.startTime,
+        e.endTime,
         e.place,
         e.host,
         e.address,
@@ -32,7 +33,8 @@ export async function getCachedEvents(): Promise<EventItem[]> {
     id: string;
     title: string;
     date: string | null;
-    time: string | null;
+    startTime: string | null;
+    endTime: string | null;
     place: string | null;
     host: string | null;
     address: string | null;
@@ -46,7 +48,8 @@ export async function getCachedEvents(): Promise<EventItem[]> {
     id: r.id,
     title: r.title,
     date: r.date ?? new Date().toISOString().slice(0, 10),
-    time: r.time ?? "",
+    startTime: r.startTime ?? "",
+    endTime: r.endTime ?? "",
     place: r.place ?? "",
     host: r.host ?? "",
     address: r.address ?? "",
