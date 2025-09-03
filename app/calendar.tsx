@@ -1,9 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Stack } from "expo-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  Animated,
-  Dimensions,
   Platform,
   Pressable,
   RefreshControl,
@@ -12,13 +10,17 @@ import {
   ToastAndroid,
   View,
 } from "react-native";
-import { PanGestureHandler, State } from "react-native-gesture-handler";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 import { Skeleton } from "../components/Skeleton";
 import { Colors } from "../constants/colors";
 import { useEvents } from "../hooks/useEvents";
 import { EventItem } from "../types/Event";
-
-const { width } = Dimensions.get("window");
 
 const days = [
   { key: "sun", label: "S" },
@@ -34,8 +36,7 @@ export default function CalendarScreen() {
   const [monthOffset, setMonthOffset] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const { events, loading, refreshing, refresh } = useEvents();
-  const panRef = useRef<PanGestureHandler>(null);
-  const translateX = useRef(new Animated.Value(0)).current;
+  const translateX = useSharedValue(0);
 
   // Set today as default selected date
   useEffect(() => {
@@ -94,38 +95,31 @@ export default function CalendarScreen() {
     setSelectedDate(date);
   };
 
-  // Handle pan gesture for month navigation
-  const onPanGestureEvent = Animated.event(
-    [{ nativeEvent: { translationX: translateX } }],
-    { useNativeDriver: true }
-  );
-
-  const onPanHandlerStateChange = (event: any) => {
-    if (event.nativeEvent.state === State.END) {
-      const { translationX, velocityX } = event.nativeEvent;
+  // Handle pan gesture for month navigation using modern Gesture API
+  const panGesture = Gesture.Pan()
+    .onUpdate((event) => {
+      translateX.value = event.translationX;
+    })
+    .onEnd((event) => {
+      const { translationX, velocityX } = event;
 
       if (Math.abs(translationX) > 50 || Math.abs(velocityX) > 500) {
         if (translationX > 0) {
-          navigateMonth("prev");
+          runOnJS(navigateMonth)("prev");
         } else {
-          navigateMonth("next");
+          runOnJS(navigateMonth)("next");
         }
       }
 
-      Animated.spring(translateX, {
-        toValue: 0,
-        useNativeDriver: true,
-      }).start();
-    }
-  };
-
-  const formatSelectedDate = (date: Date) => {
-    return date.toLocaleDateString(undefined, {
-      weekday: "long",
-      month: "short",
-      day: "numeric",
+      translateX.value = withSpring(0);
     });
-  };
+
+  // Animated style for the calendar grid
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: translateX.value }],
+    };
+  });
 
   // Format date for display (e.g., "Thursday, Aug 28")
   const formatDisplayDate = (date: Date) => {
@@ -276,18 +270,16 @@ export default function CalendarScreen() {
           </View>
 
           {/* Calendar Grid */}
-          <PanGestureHandler
-            ref={panRef}
-            onGestureEvent={onPanGestureEvent}
-            onHandlerStateChange={onPanHandlerStateChange}
-          >
+          <GestureDetector gesture={panGesture}>
             <Animated.View
-              style={{
-                flexDirection: "row",
-                flexWrap: "wrap",
-                transform: [{ translateX }],
-                marginBottom: 24,
-              }}
+              style={[
+                {
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                  marginBottom: 24,
+                },
+                animatedStyle,
+              ]}
             >
               {cells.map((n, idx) => (
                 <View
@@ -359,7 +351,7 @@ export default function CalendarScreen() {
                 </View>
               ))}
             </Animated.View>
-          </PanGestureHandler>
+          </GestureDetector>
 
           {/* Events Section */}
           <View style={{ marginTop: 24 }}>
@@ -432,9 +424,9 @@ export default function CalendarScreen() {
                       >
                         <View
                           style={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: 4,
+                            width: 14,
+                            height: 14,
+                            borderRadius: 7,
                             backgroundColor: Colors.sunsetRed,
                             marginTop: 6,
                             marginRight: 12,
@@ -482,7 +474,11 @@ export default function CalendarScreen() {
                             </Text>
                           </View>
                         </View>
-                        <Text style={{ color: Colors.textMedium }}>→</Text>
+                        <Ionicons
+                          name="chevron-forward-outline"
+                          size={16}
+                          color={Colors.textMedium}
+                        />
                       </View>
                     </View>
                   ))
